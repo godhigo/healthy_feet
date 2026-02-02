@@ -16,7 +16,7 @@
     
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="{% if request.endpoint != 'index' %}compact-page{% endif %}">
     {% if current_user.is_authenticated %}
         {% include 'components/sidebar.html' %}
         

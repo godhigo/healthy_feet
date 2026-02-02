@@ -26,7 +26,7 @@
 </div>
 
 <div class="container-card">
-    <div class="d-flex justify-between align-center mb-4">
+    <div class="d-flex justify-between align-center mb-3">
         <h3>
             <i class="fas fa-users-cog"></i> 
             Nuestro Equipo
@@ -45,13 +45,13 @@
                      data-foto="{{ empleado.foto if empleado.foto else '' }}">
                 
                 <button class="btn btn-primary btn-sm edit-btn" 
-                        style="position: absolute; top: 10px; right: 10px;"
+                        style="position: absolute; top: 5px; right: 5px; padding: 0.25rem 0.5rem;"
                         data-id="{{ empleado.id }}">
                     <i class="fas fa-edit"></i>
                 </button>
             </div>
             
-            <h3 class="empleado-name">{{ empleado.nombre }}</h3>
+            <h4 class="empleado-name">{{ empleado.nombre }}</h4>
             
             <div class="empleado-info">
                 <i class="fas fa-envelope"></i>
@@ -69,7 +69,7 @@
             </div>
             
             <!-- Formulario de edición (oculto) -->
-            <div id="edit-form-{{ empleado.id }}" class="d-none mt-4">
+            <div id="edit-form-{{ empleado.id }}" class="d-none mt-3">
                 <form method="POST" 
                       action="{{ url_for('actualizar_empleado') }}" 
                       enctype="multipart/form-data"
@@ -139,10 +139,10 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="text-center p-5">
-        <i class="fas fa-user-md fa-3x text-muted mb-3"></i>
-        <h4 class="text-muted">No hay empleados registrados</h4>
-        <p class="text-muted mb-4">Contacta al administrador para agregar empleados</p>
+    <div class="text-center p-4">
+        <i class="fas fa-user-md fa-2x text-muted mb-2"></i>
+        <h5 class="text-muted">No hay empleados registrados</h5>
+        <p class="text-muted small mb-3">Contacta al administrador para agregar empleados</p>
     </div>
     {% endif %}
 </div>

@@ -1102,7 +1102,202 @@ body {
     height: 100% !important;
 }
 
-/* Responsive */
+/* ============================================================================
+   DISEÑO COMPACTO PARA TODAS LAS PÁGINAS (excepto dashboard)
+============================================================================ */
+
+.compact-page .content-header {
+    padding: 1rem 1.5rem;
+}
+
+.compact-page .content-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.compact-page .content-subtitle {
+    font-size: 0.875rem;
+}
+
+.compact-page .content-body {
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+/* Tarjetas compactas */
+.compact-page .container-card {
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.compact-page .container-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+/* Tablas compactas */
+.compact-page .table th,
+.compact-page .table td {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.compact-page .table th {
+    font-size: 0.875rem;
+    padding: 0.75rem;
+}
+
+/* Formularios compactos */
+.compact-page .form-group {
+    margin-bottom: 1rem;
+}
+
+.compact-page .form-label {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.compact-page .form-control {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+/* Botones compactos */
+.compact-page .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.compact-page .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+.compact-page .btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+}
+
+/* Grids compactos */
+.compact-page .grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.compact-page .grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+/* Citas compactas */
+.compact-page .citas-header {
+    margin-bottom: 1rem;
+}
+
+.compact-page .citas-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.compact-page .cita-card {
+    padding: 1rem;
+}
+
+.compact-page .cita-card h4 {
+    font-size: 1rem;
+}
+
+.compact-page .cita-details p {
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.compact-page .cita-actions {
+    margin-top: 0.75rem;
+    gap: 0.5rem;
+}
+
+/* Empleados compactos */
+.compact-page .empleados-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.compact-page .empleado-card {
+    padding: 1rem;
+}
+
+.compact-page .empleado-avatar {
+    width: 80px;
+    height: 80px;
+}
+
+.compact-page .empleado-name {
+    font-size: 1rem;
+}
+
+.compact-page .empleado-info {
+    font-size: 0.875rem;
+}
+
+/* Ventas compactas */
+.compact-page .filtros-ventas {
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.compact-page .filtros-grid {
+    gap: 1rem;
+}
+
+.compact-page .resumen-ventas {
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.compact-page .resumen-card {
+    padding: 1rem;
+}
+
+.compact-page .resumen-value {
+    font-size: 1.5rem;
+}
+
+.compact-page .resumen-label {
+    font-size: 0.75rem;
+}
+
+/* Clientes compactos */
+.compact-page .search-box {
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.compact-page .search-form {
+    gap: 0.5rem;
+}
+
+/* Badges compactos */
+.compact-page .badge {
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.5rem;
+}
+
+/* Ajustes específicos para que el contenido sea más compacto */
+.compact-page .user-info {
+    font-size: 0.875rem;
+}
+
+.compact-page .date-selector {
+    padding: 0.5rem;
+}
+
+/* Asegurar que el contenido del body no tenga overflow oculto, para permitir scroll */
+.compact-page .content-body {
+    overflow-y: auto;
+}
+
+/* Responsive para dashboard compacto */
 @media (max-width: 768px) {
     .dashboard-fixed-container {
         height: auto;
@@ -1178,6 +1373,23 @@ body {
     }
     
     .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Ajustes responsive para diseño compacto */
+    .compact-page .content-body {
+        padding: 0.75rem;
+    }
+    
+    .compact-page .container-card {
+        padding: 1rem;
+    }
+    
+    .compact-page .citas-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .compact-page .empleados-grid {
         grid-template-columns: 1fr;
     }
 }

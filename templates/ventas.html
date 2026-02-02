@@ -29,7 +29,7 @@
     <form method="POST" action="{{ url_for('ventas') }}" class="filtros-grid">
         <div class="form-group">
             <label for="filtro" class="form-label">Filtrar por:</label>
-            <select id="filtro" name="filtro" class="form-control">
+            <select id="filtro" name="filtro" class="form-control form-control-sm">
                 <option value="dia" {% if filtro == 'dia' %}selected{% endif %}>Día</option>
                 <option value="semana" {% if filtro == 'semana' %}selected{% endif %}>Semana</option>
                 <option value="mes" {% if filtro == 'mes' %}selected{% endif %}>Mes</option>
@@ -42,7 +42,7 @@
         </div>
         
         <div class="form-group">
-            <button type="submit" class="btn btn-primary btn-full">
+            <button type="submit" class="btn btn-primary btn-sm btn-full">
                 <i class="fas fa-filter"></i> Aplicar Filtro
             </button>
         </div>
@@ -127,10 +127,10 @@
         </table>
     </div>
     {% else %}
-    <div class="text-center p-5">
-        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-        <h4 class="text-muted">No hay ventas registradas</h4>
-        <p class="text-muted">
+    <div class="text-center p-4">
+        <i class="fas fa-chart-line fa-2x text-muted mb-2"></i>
+        <h5 class="text-muted">No hay ventas registradas</h5>
+        <p class="text-muted small">
             {% if filtro != 'dia' %}
                 Intenta con otro filtro o periodo de tiempo
             {% else %}
@@ -156,7 +156,7 @@ function mostrarCampoFiltro() {
             <input type="date" 
                    id="valor_filtro" 
                    name="valor_filtro" 
-                   class="form-control" 
+                   class="form-control form-control-sm"
                    value="${currentValue}"
                    required>
         `;
@@ -166,7 +166,7 @@ function mostrarCampoFiltro() {
             <input type="week" 
                    id="valor_filtro" 
                    name="valor_filtro" 
-                   class="form-control" 
+                   class="form-control form-control-sm"
                    value="${currentValue}"
                    required>
         `;
@@ -176,7 +176,7 @@ function mostrarCampoFiltro() {
             <input type="month" 
                    id="valor_filtro" 
                    name="valor_filtro" 
-                   class="form-control" 
+                   class="form-control form-control-sm"
                    value="${currentValue}"
                    required>
         `;
@@ -186,7 +186,7 @@ function mostrarCampoFiltro() {
             <input type="number" 
                    id="valor_filtro" 
                    name="valor_filtro" 
-                   class="form-control" 
+                   class="form-control form-control-sm"
                    value="${currentValue}"
                    min="2020" 
                    max="2100" 
@@ -219,7 +219,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Función para ver detalles de venta
 function verDetalle(ventaId) {
-    // Aquí puedes implementar un modal o redirección
     alert('Detalles de venta #' + ventaId + '\nEsta función puede expandirse para mostrar más detalles.');
 }
 </script>

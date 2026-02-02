@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initFlashMessages();
     initForms();
     initGlobalLoader();
+    initCompactDesign();
     
     // =========================================================================
     // FUNCIONES DE INICIALIZACIÓN
@@ -88,15 +89,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Confirmación antes de acciones importantes
-        const dangerousButtons = document.querySelectorAll('.btn-danger[type=submit], .btn-finalizar:not(.no-confirm)');
-        dangerousButtons.forEach(button => {
+        // Confirmación solo para botones de eliminar (no para navegación)
+        const deleteButtons = document.querySelectorAll('.btn-danger[type="submit"]:not(.no-confirm)');
+        deleteButtons.forEach(button => {
             button.addEventListener('click', function(e) {
-                if (this.classList.contains('btn-finalizar') && 
-                    !this.classList.contains('no-confirm')) {
-                    if (!confirm('¿Estás seguro de realizar esta acción?')) {
-                        e.preventDefault();
-                    }
+                if (!confirm('¿Estás seguro de realizar esta acción?')) {
+                    e.preventDefault();
                 }
             });
         });
@@ -131,6 +129,34 @@ document.addEventListener('DOMContentLoaded', function() {
                         loader.classList.remove('hidden');
                     }
                 });
+            });
+        }
+    }
+    
+    function initCompactDesign() {
+        // Aplicar clases compactas a elementos específicos en páginas compactas
+        if (document.body.classList.contains('compact-page')) {
+            // Ajustar todos los botones principales para que sean más compactos
+            const mainButtons = document.querySelectorAll('.btn:not(.btn-sm):not(.btn-lg)');
+            mainButtons.forEach(button => {
+                // No aplicar a botones dentro de formularios específicos
+                if (!button.closest('.no-compact')) {
+                    button.classList.add('btn-sm');
+                }
+            });
+            
+            // Ajustar tamaños de íconos en títulos
+            const titleIcons = document.querySelectorAll('.content-title i');
+            titleIcons.forEach(icon => {
+                icon.style.fontSize = '1.25rem';
+            });
+            
+            // Ajustar badges
+            const badges = document.querySelectorAll('.badge');
+            badges.forEach(badge => {
+                if (!badge.classList.contains('badge-sm')) {
+                    badge.classList.add('badge-sm');
+                }
             });
         }
     }
