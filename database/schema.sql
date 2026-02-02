@@ -163,36 +163,7 @@ CREATE TABLE `productos` (
 
 -- Insertar usuario administrador por defecto (contraseña: admin123)
 INSERT INTO `usuarios` (`nombre`, `email`, `password_hash`, `role`) 
-VALUES ('Administrador', 'admin@healthyfeet.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 'admin');
-
--- Insertar servicios básicos
-INSERT INTO `servicios` (`nombre_servicio`, `descripcion`, `precio`, `duracion`, `categoria`) VALUES
-('Manicure Básico', 'Limpieza, corte y esmaltado de uñas', 150.00, 45, 'Manicure'),
-('Pedicure Spa', 'Tratamiento completo para pies con exfoliación y masaje', 250.00, 60, 'Pedicure'),
-('Uñas Acrílicas', 'Aplicación de uñas acrílicas con diseño', 350.00, 90, 'Uñas'),
-('Depilación Cera', 'Depilación con cera en zona elegida', 200.00, 30, 'Depilación'),
-('Facial Limpieza', 'Limpieza facial profunda con mascarilla', 300.00, 60, 'Facial'),
-('Masaje Relajante', 'Masaje corporal de 30 minutos', 280.00, 30, 'Masaje'),
-('Corte de Cabello', 'Corte y peinado profesional', 180.00, 45, 'Cabello'),
-('Tinte Cabello', 'Aplicación de tinte profesional', 400.00, 90, 'Cabello'),
-('Maquillaje Social', 'Maquillaje para eventos sociales', 250.00, 60, 'Maquillaje'),
-('Depilación Hilo', 'Depilación facial con hilo', 120.00, 30, 'Depilación');
-
--- Insertar algunos empleados de ejemplo
-INSERT INTO `empleados` (`nombre`, `email`, `telefono`, `especialidad`) VALUES
-('María González', 'maria@healthyfeet.com', '5512345678', 'Manicure y Pedicure'),
-('Carlos Rodríguez', 'carlos@healthyfeet.com', '5523456789', 'Uñas Acrílicas'),
-('Ana Martínez', 'ana@healthyfeet.com', '5534567890', 'Depilación y Facial'),
-('Luisa Fernández', 'luisa@healthyfeet.com', '5545678901', 'Masajes y Spa'),
-('Pedro Sánchez', 'pedro@healthyfeet.com', '5556789012', 'Corte y Tinte');
-
--- Insertar algunos clientes de ejemplo
-INSERT INTO `clientes` (`nombre`, `telefono`, `email`) VALUES
-('Laura Jiménez', '5567890123', 'laura@email.com'),
-('Ricardo Torres', '5578901234', 'ricardo@email.com'),
-('Sofía Ramírez', '5589012345', 'sofia@email.com'),
-('Miguel Ángel', '5590123456', 'miguel@email.com'),
-('Gabriela López', '5501234567', 'gabriela@email.com');
+VALUES ('Administrador', 'admin@healthyfeet.com', 'pbkdf2:sha256:600000$Qvs3IZHv1q9zmayI$f4aa27db925e4b8b6e5b05c2579524a5e4519698a83298ef00927f323010a21b', 'admin');
 
 -- --------------------------------------------------------
 -- VISTAS ÚTILES
