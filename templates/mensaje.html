@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Mensaje - Healthy Feet{% endblock %}
+{% block header_title %}{% endblock %}
+{% block header_icon %}fa-info-circle{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 500px;">
+    <div class="container-card text-center">
+        <div class="mb-4">
+            {% if mensaje.startswith('❌') or mensaje.startswith('⛔') %}
+                <i class="fas fa-exclamation-triangle fa-4x text-danger"></i>
+            {% elif mensaje.startswith('⚠️') or mensaje.startswith('⚠') %}
+                <i class="fas fa-exclamation-circle fa-4x text-warning"></i>
+            {% elif mensaje.startswith('✅') %}
+                <i class="fas fa-check-circle fa-4x text-success"></i>
+            {% else %}
+                <i class="fas fa-info-circle fa-4x text-primary"></i>
+            {% endif %}
+        </div>
+        
+        <h3 class="mb-3">
+            {% if mensaje.startswith('❌') %}
+                {{ mensaje[2:] }}
+            {% elif mensaje.startswith('⛔') %}
+                {{ mensaje[2:] }}
+            {% elif mensaje.startswith('⚠️') %}
+                {{ mensaje[3:] }}
+            {% elif mensaje.startswith('⚠') %}
+                {{ mensaje[2:] }}
+            {% elif mensaje.startswith('✅') %}
+                {{ mensaje[2:] }}
+            {% else %}
+                {{ mensaje }}
+            {% endif %}
+        </h3>
+        
+        <p class="text-muted mb-4">
+            {% if mensaje.startswith('❌') %}
+                Ha ocurrido un error. Por favor, verifica e intenta nuevamente.
+            {% elif mensaje.startswith('⛔') %}
+                Acceso restringido. No tienes permisos para esta acción.
+            {% elif mensaje.startswith('⚠️') or mensaje.startswith('⚠') %}
+                Por favor, revisa la información proporcionada.
+            {% elif mensaje.startswith('✅') %}
+                La operación se completó exitosamente.
+            {% else %}
+                Información del sistema.
+            {% endif %}
+        </p>
+        
+        <a href="{{ regresar or '/' }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+{% endblock %}

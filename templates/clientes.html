@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes - Healthy Feet{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-between align-center">
+        <div>
+            <h1 class="content-title">
+                <i class="fas fa-users"></i>
+                Gestión de Clientes
+            </h1>
+            <p class="content-subtitle">Administra la información de tus clientes</p>
+        </div>
+        
+        <div class="d-flex align-center gap-3">
+            <div class="user-info">
+                <span class="text-primary">{{ current_user.nombre }}</span>
+                <span class="text-muted">• {{ current_user.email }}</span>
+            </div>
+            <button class="btn btn-outline btn-sm" id="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="search-box">
+    <form method="GET" action="{{ url_for('clientes') }}" class="search-form">
+        <div class="form-group" style="flex: 1;">
+            <input type="text" 
+                   name="nombre" 
+                   class="form-control" 
+                   placeholder="Buscar cliente por nombre..." 
+                   value="{{ filtro }}">
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+        <button type="button" class="btn btn-outline clear-btn">
+            <i class="fas fa-sync"></i> Limpiar
+        </button>
+    </form>
+</div>
+
+<div class="container-card">
+    <div class="d-flex justify-between align-center mb-4">
+        <h3>
+            <i class="fas fa-list"></i> 
+            Lista de Clientes
+            <span class="badge badge-primary">{{ clientes|length }}</span>
+        </h3>
+    </div>
+    
+    {% if clientes %}
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Última Cita</th>
+                    <th>Total Citas</th>
+                    <th>Historial</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cliente in clientes %}
+                <tr>
+                    <td>
+                        <strong>{{ cliente.nombre }}</strong>
+                    </td>
+                    <td>
+                        <i class="fas fa-phone text-primary"></i>
+                        {{ cliente.telefono }}
+                    </td>
+                    <td>
+                        {% if historial[cliente.id] and historial[cliente.id][0] %}
+                            {{ historial[cliente.id][0].fecha|format_date }}
+                            <span class="badge badge-success">{{ historial[cliente.id][0].hora|format_time }}</span>
+                        {% else %}
+                            <span class="text-muted">Sin citas</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-primary">
+                            {{ historial[cliente.id]|length }}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline historial-btn" data-id="{{ cliente.id }}">
+                            <i class="fas fa-history"></i> Ver
+                        </button>
+                    </td>
+                </tr>
+                
+                <!-- Fila expandible para historial -->
+                <tr id="historial-{{ cliente.id }}" class="d-none">
+                    <td colspan="5">
+                        <div class="p-3 bg-light rounded">
+                            <h6 class="mb-3">
+                                <i class="fas fa-calendar-alt"></i> 
+                                Historial de Citas
+                            </h6>
+                            
+                            {% if historial[cliente.id] %}
+                            <div class="table-container">
+                                <table class="historial-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Hora</th>
+                                            <th>Servicio</th>
+                                            <th>Empleado</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for cita in historial[cliente.id] %}
+                                        <tr>
+                                            <td>{{ cita.fecha|format_date }}</td>
+                                            <td>{{ cita.hora|format_time }}</td>
+                                            <td>{{ cita.nombre_servicio }}</td>
+                                            <td>{{ cita.empleado }}</td>
+                                            <td>
+                                                {% if cita.estado %}
+                                                    {% if cita.estado == 'finalizada' %}
+                                                        <span class="badge badge-success">{{ cita.estado }}</span>
+                                                    {% else %}
+                                                        <span class="badge badge-warning">{{ cita.estado }}</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="badge badge-warning">pendiente</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-center text-muted py-3">
+                                <i class="fas fa-calendar-times fa-2x"></i><br>
+                                No hay historial de citas
+                            </p>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center p-5">
+        <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">No se encontraron clientes</h4>
+        <p class="text-muted">
+            {% if filtro %}
+                Intenta con otro término de búsqueda
+            {% else %}
+                Los clientes aparecerán aquí cuando agendes citas
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar clic en botones de historial
+    document.querySelectorAll('.historial-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const clienteId = this.getAttribute('data-id');
+            const row = document.getElementById('historial-' + clienteId);
+            row.classList.toggle('d-none');
+        });
+    });
+    
+    // Manejar clic en botón de limpiar
+    const clearBtn = document.querySelector('.clear-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            window.location.href = '{{ url_for("clientes") }}';
+        });
+    }
+});
+</script>
+{% endblock %}

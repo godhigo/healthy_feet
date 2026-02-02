@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Citas - Healthy Feet{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-between align-center">
+        <div>
+            <h1 class="content-title">
+                <i class="fas fa-calendar-check"></i>
+                Gestión de Citas
+            </h1>
+            <p class="content-subtitle">Administra las citas del día</p>
+        </div>
+        
+        <div class="d-flex align-center gap-3">
+            <div class="user-info">
+                <span class="text-primary">{{ current_user.nombre }}</span>
+                <span class="text-muted">• {{ current_user.email }}</span>
+            </div>
+            <button class="btn btn-outline btn-sm" id="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="citas-header">
+    <div class="date-selector">
+        <i class="fas fa-calendar-alt text-primary"></i>
+        <form method="GET" action="{{ url_for('citas') }}" class="d-flex align-center gap-2">
+            <input type="date" 
+                   name="fecha" 
+                   value="{{ fecha_actual }}" 
+                   class="form-control"
+                   onchange="this.form.submit()"
+                   style="width: auto;">
+        </form>
+    </div>
+    
+    <button class="btn btn-success" id="toggle-form">
+        <i class="fas fa-plus"></i> Nueva Cita
+    </button>
+</div>
+
+<!-- Formulario Nueva Cita (oculto por defecto) -->
+<div id="new-cita-form" class="container-card d-none">
+    <h3 class="mb-3"><i class="fas fa-calendar-plus"></i> Agendar Nueva Cita</h3>
+    <form method="POST" action="{{ url_for('agregar_cita') }}">
+        <div class="grid grid-2 gap-3">
+            <div class="form-group">
+                <label for="cliente" class="form-label">Cliente</label>
+                <input list="clientes-list" 
+                       id="cliente" 
+                       name="cliente" 
+                       class="form-control" 
+                       placeholder="Escribe o selecciona un cliente" 
+                       required>
+                <datalist id="clientes-list">
+                    {% for c in clientes %}
+                        <option value="{{ c.nombre }}"></option>
+                    {% endfor %}
+                </datalist>
+            </div>
+            
+            <div class="form-group">
+                <label for="telefono" class="form-label">Teléfono</label>
+                <input type="tel" 
+                       id="telefono" 
+                       name="telefono" 
+                       class="form-control" 
+                       placeholder="10 dígitos" 
+                       required
+                       pattern="\d{10}"
+                       maxlength="10">
+            </div>
+            
+            <div class="form-group">
+                <label for="servicio" class="form-label">Servicio</label>
+                <select id="servicio" name="servicio" class="form-control" required>
+                    <option value="">Seleccionar servicio...</option>
+                    {% for s in servicios %}
+                        <option value="{{ s.id }}">{{ s.nombre_servicio }} (${{ s.precio }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="empleado" class="form-label">Empleado</label>
+                <select id="empleado" name="empleado" class="form-control" required>
+                    <option value="">Seleccionar empleado...</option>
+                    {% for e in empleados %}
+                        <option value="{{ e.id }}">{{ e.nombre }} - {{ e.especialidad }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="fecha" class="form-label">Fecha</label>
+                <input type="date" 
+                       id="fecha" 
+                       name="fecha" 
+                       class="form-control" 
+                       value="{{ fecha_actual }}" 
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <label for="hora" class="form-label">Hora</label>
+                <input type="time" 
+                       id="hora" 
+                       name="hora" 
+                       class="form-control" 
+                       required
+                       min="09:00"
+                       max="20:00"
+                       step="900">
+            </div>
+        </div>
+        
+        <div class="d-flex justify-center gap-3 mt-4">
+            <button type="button" class="btn btn-outline" id="cancel-form">Cancelar</button>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save"></i> Guardar Cita
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Lista de Citas del Día -->
+<div class="container-card">
+    <h3 class="mb-4">
+        <i class="fas fa-calendar-day"></i> 
+        Citas del {{ fecha_actual|format_date }}
+        <span class="badge badge-primary">{{ citas_dia|length }}</span>
+    </h3>
+    
+    {% if citas_dia %}
+    <div class="citas-grid">
+        {% for cita in citas_dia %}
+        <div class="cita-card">
+            <div class="d-flex justify-between align-center mb-3">
+                <h4 class="text-primary">{{ cita.nombre_cliente }}</h4>
+                <span class="badge badge-success">{{ cita.hora|format_time }}</span>
+            </div>
+            
+            <div class="cita-details">
+                <p class="empleado-info">
+                    <i class="fas fa-user-md text-primary"></i>
+                    <strong>Empleado:</strong> {{ cita.nombre_empleado }}
+                </p>
+                <p class="empleado-info">
+                    <i class="fas fa-spa text-primary"></i>
+                    <strong>Servicio:</strong> {{ cita.nombre_servicio }}
+                </p>
+                <p class="empleado-info">
+                    <i class="fas fa-phone text-primary"></i>
+                    <strong>Teléfono:</strong> {{ cita.telefono }}
+                </p>
+                <p class="empleado-info">
+                    <i class="fas fa-money-bill text-primary"></i>
+                    <strong>Precio:</strong> ${{ cita.precio }}
+                </p>
+                <p class="empleado-info">
+                    <i class="fas fa-info-circle text-primary"></i>
+                    <strong>Estado:</strong> 
+                    {% if cita.estado == 'finalizada' %}
+                        <span class="badge badge-success">Finalizada</span>
+                    {% else %}
+                        <span class="badge badge-warning">Pendiente</span>
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div class="cita-actions">
+                <form method="GET" action="{{ url_for('editar_cita') }}" class="d-inline">
+                    <input type="hidden" name="id" value="{{ cita.id }}">
+                    <button type="submit" class="btn btn-outline btn-sm">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                </form>
+                
+                {% if cita.estado != 'finalizada' %}
+                <form method="POST" action="{{ url_for('finalizar_cita') }}" class="d-inline no-confirm">
+                    <input type="hidden" name="id_cita" value="{{ cita.id }}">
+                    <button type="submit" class="btn btn-success btn-sm">
+                        <i class="fas fa-check-circle"></i> Finalizar
+                    </button>
+                </form>
+                {% else %}
+                <button class="btn btn-success btn-sm" disabled>
+                    <i class="fas fa-check-circle"></i> Finalizada
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center p-5">
+        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">No hay citas para esta fecha</h4>
+        <p class="text-muted">Agenda una nueva cita haciendo clic en "Nueva Cita"</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('toggle-form');
+    const cancelBtn = document.getElementById('cancel-form');
+    const formContainer = document.getElementById('new-cita-form');
+    
+    toggleBtn.addEventListener('click', function() {
+        formContainer.classList.toggle('d-none');
+        toggleBtn.innerHTML = formContainer.classList.contains('d-none') 
+            ? '<i class="fas fa-plus"></i> Nueva Cita' 
+            : '<i class="fas fa-times"></i> Cancelar';
+        toggleBtn.classList.toggle('btn-success');
+        toggleBtn.classList.toggle('btn-outline');
+    });
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function() {
+            formContainer.classList.add('d-none');
+            toggleBtn.innerHTML = '<i class="fas fa-plus"></i> Nueva Cita';
+            toggleBtn.classList.add('btn-success');
+            toggleBtn.classList.remove('btn-outline');
+        });
+    }
+    
+    // Validación de teléfono en tiempo real
+    const telefonoInput = document.getElementById('telefono');
+    if (telefonoInput) {
+        telefonoInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/\D/g, '').slice(0, 10);
+        });
+    }
+});
+</script>
+{% endblock %}

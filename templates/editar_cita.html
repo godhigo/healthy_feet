@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Cita - Healthy Feet{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-between align-center">
+        <div>
+            <h1 class="content-title">
+                <i class="fas fa-edit"></i>
+                Editar Cita
+            </h1>
+            <p class="content-subtitle">Modificar información de la cita</p>
+        </div>
+        
+        <div class="d-flex align-center gap-3">
+            <div class="user-info">
+                <span class="text-primary">{{ current_user.nombre }}</span>
+                <span class="text-muted">• {{ current_user.email }}</span>
+            </div>
+            <button class="btn btn-outline btn-sm" id="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="container" style="max-width: 800px;">
+    <div class="container-card">
+        <h3 class="mb-4">
+            <i class="fas fa-calendar-edit"></i> 
+            Editar Cita #{{ cita.id }}
+        </h3>
+        
+        <form method="POST" action="{{ url_for('actualizar_cita') }}">
+            <input type="hidden" name="id" value="{{ cita.id }}">
+            
+            <div class="grid grid-2 gap-4">
+                <div class="form-group">
+                    <label for="id_cliente" class="form-label">Cliente</label>
+                    <select id="id_cliente" name="id_cliente" class="form-control" required>
+                        <option value="">Seleccionar cliente...</option>
+                        {% for cliente in clientes %}
+                            <option value="{{ cliente.id }}" 
+                                {% if cliente.id == cita.id_cliente %}selected{% endif %}>
+                                {{ cliente.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_servicio" class="form-label">Servicio</label>
+                    <select id="id_servicio" name="id_servicio" class="form-control" required>
+                        <option value="">Seleccionar servicio...</option>
+                        {% for servicio in servicios %}
+                            <option value="{{ servicio.id }}"
+                                {% if servicio.id == cita.id_servicio %}selected{% endif %}>
+                                {{ servicio.nombre_servicio }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_empleado" class="form-label">Empleado</label>
+                    <select id="id_empleado" name="id_empleado" class="form-control" required>
+                        <option value="">Seleccionar empleado...</option>
+                        {% for empleado in empleados %}
+                            <option value="{{ empleado.id }}"
+                                {% if empleado.id == cita.id_empleado %}selected{% endif %}>
+                                {{ empleado.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fecha" class="form-label">Fecha</label>
+                    <input type="date" 
+                           id="fecha" 
+                           name="fecha" 
+                           class="form-control" 
+                           value="{{ cita.fecha }}" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="hora" class="form-label">Hora</label>
+                    <input type="time" 
+                           id="hora" 
+                           name="hora" 
+                           class="form-control" 
+                           value="{{ cita.hora }}" 
+                           required
+                           min="09:00"
+                           max="20:00"
+                           step="900">
+                </div>
+            </div>
+            
+            <div class="d-flex justify-between align-center mt-4">
+                <a href="{{ url_for('citas') }}" class="btn btn-outline">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

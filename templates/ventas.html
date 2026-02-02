@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Ventas - Healthy Feet{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-between align-center">
+        <div>
+            <h1 class="content-title">
+                <i class="fas fa-chart-line"></i>
+                Reporte de Ventas
+            </h1>
+            <p class="content-subtitle">Historial de ventas y ganancias</p>
+        </div>
+        
+        <div class="d-flex align-center gap-3">
+            <div class="user-info">
+                <span class="text-primary">{{ current_user.nombre }}</span>
+                <span class="text-muted">• {{ current_user.email }}</span>
+            </div>
+            <button class="btn btn-outline btn-sm" id="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="filtros-ventas">
+    <form method="POST" action="{{ url_for('ventas') }}" class="filtros-grid">
+        <div class="form-group">
+            <label for="filtro" class="form-label">Filtrar por:</label>
+            <select id="filtro" name="filtro" class="form-control">
+                <option value="dia" {% if filtro == 'dia' %}selected{% endif %}>Día</option>
+                <option value="semana" {% if filtro == 'semana' %}selected{% endif %}>Semana</option>
+                <option value="mes" {% if filtro == 'mes' %}selected{% endif %}>Mes</option>
+                <option value="ano" {% if filtro == 'ano' %}selected{% endif %}>Año</option>
+            </select>
+        </div>
+        
+        <div id="campo-extra" class="form-group">
+            <!-- Campo dinámico se insertará aquí -->
+        </div>
+        
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary btn-full">
+                <i class="fas fa-filter"></i> Aplicar Filtro
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="resumen-ventas">
+    <div class="resumen-card">
+        <div class="resumen-value">{{ ventas|length }}</div>
+        <div class="resumen-label">Total Ventas</div>
+    </div>
+    
+    <div class="resumen-card">
+        <div class="resumen-value">${{ "%.2f"|format(total_ganancias) }}</div>
+        <div class="resumen-label">Ganancias Totales</div>
+    </div>
+    
+    <div class="resumen-card">
+        <div class="resumen-value">
+            {% if ventas %}
+                ${{ "%.2f"|format(total_ganancias / ventas|length) }}
+            {% else %}
+                $0.00
+            {% endif %}
+        </div>
+        <div class="resumen-label">Promedio por Venta</div>
+    </div>
+</div>
+
+<div class="container-card">
+    <h3 class="mb-4">
+        <i class="fas fa-receipt"></i> 
+        Detalle de Ventas
+        <span class="badge badge-primary">{{ ventas|length }}</span>
+    </h3>
+    
+    {% if ventas %}
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Empleado</th>
+                    <th>Servicio</th>
+                    <th>Total</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for venta in ventas %}
+                <tr>
+                    <td><strong>#{{ venta.id }}</strong></td>
+                    <td>
+                        <i class="fas fa-calendar text-primary"></i>
+                        {{ venta.fecha.strftime('%d/%m/%Y') }}
+                    </td>
+                    <td>
+                        <i class="fas fa-user text-primary"></i>
+                        {{ venta.cliente }}
+                    </td>
+                    <td>
+                        <i class="fas fa-user-md text-primary"></i>
+                        {{ venta.empleado }}
+                    </td>
+                    <td>
+                        <i class="fas fa-spa text-primary"></i>
+                        {{ venta.servicio }}
+                    </td>
+                    <td>
+                        <span class="badge badge-success">${{ venta.total }}</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline view-detail-btn" data-id="{{ venta.id }}">
+                            <i class="fas fa-eye"></i> Ver
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center p-5">
+        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">No hay ventas registradas</h4>
+        <p class="text-muted">
+            {% if filtro != 'dia' %}
+                Intenta con otro filtro o periodo de tiempo
+            {% else %}
+                Las ventas aparecerán aquí cuando finalices citas
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Función para mostrar campos dinámicos según el filtro seleccionado
+function mostrarCampoFiltro() {
+    const filtro = document.getElementById('filtro').value;
+    const campoExtra = document.getElementById('campo-extra');
+    
+    let html = '';
+    let currentValue = '{{ valor_filtro or "" }}';
+    
+    if (filtro === 'dia') {
+        html = `
+            <label for="valor_filtro" class="form-label">Seleccionar día:</label>
+            <input type="date" 
+                   id="valor_filtro" 
+                   name="valor_filtro" 
+                   class="form-control" 
+                   value="${currentValue}"
+                   required>
+        `;
+    } else if (filtro === 'semana') {
+        html = `
+            <label for="valor_filtro" class="form-label">Seleccionar semana:</label>
+            <input type="week" 
+                   id="valor_filtro" 
+                   name="valor_filtro" 
+                   class="form-control" 
+                   value="${currentValue}"
+                   required>
+        `;
+    } else if (filtro === 'mes') {
+        html = `
+            <label for="valor_filtro" class="form-label">Seleccionar mes:</label>
+            <input type="month" 
+                   id="valor_filtro" 
+                   name="valor_filtro" 
+                   class="form-control" 
+                   value="${currentValue}"
+                   required>
+        `;
+    } else if (filtro === 'ano') {
+        html = `
+            <label for="valor_filtro" class="form-label">Seleccionar año:</label>
+            <input type="number" 
+                   id="valor_filtro" 
+                   name="valor_filtro" 
+                   class="form-control" 
+                   value="${currentValue}"
+                   min="2020" 
+                   max="2100" 
+                   placeholder="2024"
+                   required>
+        `;
+    }
+    
+    campoExtra.innerHTML = html;
+}
+
+// Inicializar campos al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    mostrarCampoFiltro();
+    
+    // Agregar evento al select de filtro
+    const filtroSelect = document.getElementById('filtro');
+    if (filtroSelect) {
+        filtroSelect.addEventListener('change', mostrarCampoFiltro);
+    }
+    
+    // Agregar evento a los botones de ver detalle
+    document.querySelectorAll('.view-detail-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const ventaId = this.getAttribute('data-id');
+            verDetalle(ventaId);
+        });
+    });
+});
+
+// Función para ver detalles de venta
+function verDetalle(ventaId) {
+    // Aquí puedes implementar un modal o redirección
+    alert('Detalles de venta #' + ventaId + '\nEsta función puede expandirse para mostrar más detalles.');
+}
+</script>
+{% endblock %}

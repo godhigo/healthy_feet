@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Healthy Feet{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-fixed-container">
+    <!-- Título compacto -->
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">
+            <i class="fas fa-home me-2"></i>Dashboard
+        </h1>
+        <p class="dashboard-subtitle">Resumen general del sistema</p>
+    </div>
+
+    <!-- Tarjetas de estadísticas más compactas -->
+    <div class="dashboard-stats-compact">
+        <div class="row">
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card-compact">
+                    <div class="stat-icon-compact">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-value-compact">{{ citas_dia }}</div>
+                    <div class="stat-label-compact">Citas Hoy</div>
+                    <a href="{{ url_for('citas') }}" class="stat-link">Ver Citas</a>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card-compact">
+                    <div class="stat-icon-compact">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value-compact">{{ clientes }}</div>
+                    <div class="stat-label-compact">Clientes</div>
+                    <a href="{{ url_for('clientes') }}" class="stat-link">Ver Clientes</a>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card-compact">
+                    <div class="stat-icon-compact">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <div class="stat-value-compact">{{ empleados }}</div>
+                    <div class="stat-label-compact">Empleados</div>
+                    <a href="{{ url_for('empleados') }}" class="stat-link">Ver Empleados</a>
+                </div>
+            </div>
+            
+            <div class="col-md-3 col-sm-6">
+                <div class="stat-card-compact">
+                    <div class="stat-icon-compact">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-value-compact">${{ "%.2f"|format(ventas_semana) }}</div>
+                    <div class="stat-label-compact">Ventas Semana</div>
+                    <a href="{{ url_for('ventas') }}" class="stat-link">Ver Ventas</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos ajustados -->
+    <div class="dashboard-charts-compact">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="chart-card-compact">
+                    <div class="chart-header-compact">
+                        <h5 class="chart-title-compact">
+                            <i class="fas fa-chart-line me-2"></i>Ventas últimos 7 días
+                        </h5>
+                    </div>
+                    <div class="chart-body-compact">
+                        <canvas id="ventasChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="chart-card-compact">
+                    <div class="chart-header-compact">
+                        <h5 class="chart-title-compact">
+                            <i class="fas fa-chart-bar me-2"></i>Servicios más vendidos
+                        </h5>
+                    </div>
+                    <div class="chart-body-compact">
+                        <canvas id="serviciosChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch("{{ url_for('dashboard_data') }}")
+        .then(response => response.json())
+        .then(data => {
+            // Gráfico de ventas con tamaño ajustado
+            const ventasCtx = document.getElementById('ventasChart').getContext('2d');
+            new Chart(ventasCtx, {
+                type: 'line',
+                data: {
+                    labels: data.ventas_dias.map(v => {
+                        const date = new Date(v.dia);
+                        return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                    }),
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: data.ventas_dias.map(v => v.total || 0),
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 10
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value;
+                                },
+                                stepSize: 100
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de servicios con tamaño ajustado
+            const serviciosCtx = document.getElementById('serviciosChart').getContext('2d');
+            new Chart(serviciosCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.servicios.map(s => {
+                        // Acortar nombres largos
+                        const name = s.nombre_servicio;
+                        return name.length > 15 ? name.substring(0, 12) + '...' : name;
+                    }),
+                    datasets: [{
+                        label: 'Ventas',
+                        data: data.servicios.map(s => s.cantidad),
+                        backgroundColor: [
+                            '#4361ee', '#3a0ca3', '#4cc9f0', '#f72585', '#7209b7'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error cargando datos:', error);
+        });
+});
+</script>
+{% endblock %}

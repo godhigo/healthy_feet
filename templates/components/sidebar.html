@@ -1,0 +1,45 @@
+<aside class="sidebar">
+    <div class="sidebar-profile">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" 
+             alt="Healthy Feet Logo" 
+             class="sidebar-avatar"
+             onerror="this.src='https://via.placeholder.com/120/4361ee/ffffff?text=HF'">
+        <h2 class="sidebar-title">Healthy Feet</h2>
+        <p class="sidebar-subtitle">Sistema de Gestión</p>
+    </div>
+
+    <nav class="sidebar-nav">
+
+        <a href="{{ url_for('index') }}" class="sidebar-link {% if request.path == '/' %}active{% endif %}">
+            <i class="fas fa-home sidebar-icon"></i>
+            <span>Dashboard</span>
+        </a>
+        
+        <a href="{{ url_for('citas') }}" class="sidebar-link {% if request.path.startswith('/citas') %}active{% endif %}">
+            <i class="fas fa-calendar-check sidebar-icon"></i>
+            <span>Citas</span>
+        </a>
+        
+        <a href="{{ url_for('clientes') }}" class="sidebar-link {% if request.path.startswith('/clientes') %}active{% endif %}">
+            <i class="fas fa-users sidebar-icon"></i>
+            <span>Clientes</span>
+        </a>
+        
+        <a href="{{ url_for('empleados') }}" class="sidebar-link {% if request.path.startswith('/empleados') %}active{% endif %}">
+            <i class="fas fa-user-md sidebar-icon"></i>
+            <span>Empleados</span>
+        </a>
+        
+        <a href="{{ url_for('ventas') }}" class="sidebar-link {% if request.path.startswith('/ventas') %}active{% endif %}">
+            <i class="fas fa-chart-line sidebar-icon"></i>
+            <span>Ventas</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <a href="{{ url_for('logout') }}" class="btn btn-danger btn-full">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Cerrar Sesión</span>
+        </a>
+    </div>
+</aside>

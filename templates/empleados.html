@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Empleados - Healthy Feet{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-between align-center">
+        <div>
+            <h1 class="content-title">
+                <i class="fas fa-user-md"></i>
+                Gestión de Empleados
+            </h1>
+            <p class="content-subtitle">Administra el personal</p>
+        </div>
+        
+        <div class="d-flex align-center gap-3">
+            <div class="user-info">
+                <span class="text-primary">{{ current_user.nombre }}</span>
+                <span class="text-muted">• {{ current_user.email }}</span>
+            </div>
+            <button class="btn btn-outline btn-sm" id="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="container-card">
+    <div class="d-flex justify-between align-center mb-4">
+        <h3>
+            <i class="fas fa-users-cog"></i> 
+            Nuestro Equipo
+            <span class="badge badge-primary">{{ empleados|length }}</span>
+        </h3>
+    </div>
+    
+    {% if empleados %}
+    <div class="empleados-grid">
+        {% for empleado in empleados %}
+        <div class="empleado-card">
+            <div class="position-relative">
+                <img src="{{ url_for('uploads', filename=empleado.foto) if empleado.foto else url_for('static', filename='images/default-avatar.png') }}" 
+                     alt="{{ empleado.nombre }}" 
+                     class="empleado-avatar"
+                     data-foto="{{ empleado.foto if empleado.foto else '' }}">
+                
+                <button class="btn btn-primary btn-sm edit-btn" 
+                        style="position: absolute; top: 10px; right: 10px;"
+                        data-id="{{ empleado.id }}">
+                    <i class="fas fa-edit"></i>
+                </button>
+            </div>
+            
+            <h3 class="empleado-name">{{ empleado.nombre }}</h3>
+            
+            <div class="empleado-info">
+                <i class="fas fa-envelope"></i>
+                {{ empleado.email }}
+            </div>
+            
+            <div class="empleado-info">
+                <i class="fas fa-phone"></i>
+                {{ empleado.telefono }}
+            </div>
+            
+            <div class="empleado-info">
+                <i class="fas fa-briefcase"></i>
+                <span class="badge badge-primary">{{ empleado.especialidad }}</span>
+            </div>
+            
+            <!-- Formulario de edición (oculto) -->
+            <div id="edit-form-{{ empleado.id }}" class="d-none mt-4">
+                <form method="POST" 
+                      action="{{ url_for('actualizar_empleado') }}" 
+                      enctype="multipart/form-data"
+                      class="p-3 bg-light rounded">
+                    <input type="hidden" name="id" value="{{ empleado.id }}">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" 
+                               name="nombre" 
+                               class="form-control" 
+                               value="{{ empleado.nombre }}" 
+                               required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" 
+                               name="email" 
+                               class="form-control" 
+                               value="{{ empleado.email }}" 
+                               required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <input type="tel" 
+                               name="telefono" 
+                               class="form-control" 
+                               value="{{ empleado.telefono }}" 
+                               required
+                               pattern="\d{10}"
+                               maxlength="10">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Especialidad</label>
+                        <input type="text" 
+                               name="especialidad" 
+                               class="form-control" 
+                               value="{{ empleado.especialidad }}" 
+                               required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Foto de perfil</label>
+                        <input type="file" 
+                               name="foto" 
+                               class="form-control"
+                               accept="image/*">
+                        <small class="text-muted">Deja en blanco para mantener la foto actual</small>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="button" 
+                                class="btn btn-outline btn-sm cancel-edit" 
+                                data-id="{{ empleado.id }}">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success btn-sm">
+                            <i class="fas fa-save"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center p-5">
+        <i class="fas fa-user-md fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">No hay empleados registrados</h4>
+        <p class="text-muted mb-4">Contacta al administrador para agregar empleados</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar clic en botones de edición
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const empleadoId = this.getAttribute('data-id');
+            const form = document.getElementById('edit-form-' + empleadoId);
+            form.classList.toggle('d-none');
+        });
+    });
+    
+    // Manejar clic en botones de cancelar
+    document.querySelectorAll('.cancel-edit').forEach(button => {
+        button.addEventListener('click', function() {
+            const empleadoId = this.getAttribute('data-id');
+            const form = document.getElementById('edit-form-' + empleadoId);
+            form.classList.add('d-none');
+        });
+    });
+    
+    // Manejar error en imágenes
+    document.querySelectorAll('.empleado-avatar').forEach(img => {
+        img.addEventListener('error', function() {
+            const foto = this.getAttribute('data-foto');
+            if (foto) {
+                // Si hay foto pero falla la carga, usar avatar por defecto
+                this.src = '{{ url_for("static", filename="images/default-avatar.png") }}';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
