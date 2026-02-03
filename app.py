@@ -1,8 +1,3 @@
-"""
-Sistema de Gestión para Salón de Belleza - Versión Mejorada
-Autores: [Tu Nombre]
-Fecha: [Fecha Actual]
-"""
 from flask import Flask, render_template, request, redirect, send_from_directory, flash, jsonify, abort
 import os
 import platform
@@ -38,7 +33,7 @@ class Config:
     DB_HOST = os.getenv("DB_HOST", "localhost")
     DB_USER = os.getenv("DB_USER", "root")
     DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-    DB_NAME = os.getenv("DB_NAME", "salon_belleza")
+    DB_NAME = os.getenv("DB_NAME", "healthy feet")
     
     # Uploads
     BASE_DIR = Path(__file__).parent
@@ -50,7 +45,6 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SECURE = os.getenv("FLASK_ENV") == "production"
     SESSION_COOKIE_SAMESITE = 'Lax'
-    PERMANENT_SESSION_LIFETIME = 3600  # 1 hour
 
 # Inicializar Flask con configuración
 app = Flask(__name__)
