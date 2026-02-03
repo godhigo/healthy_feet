@@ -90,7 +90,7 @@
                 <select id="empleado" name="empleado" class="form-control" required>
                     <option value="">Seleccionar empleado...</option>
                     {% for e in empleados %}
-                        <option value="{{ e.id }}">{{ e.nombre }} - {{ e.especialidad }}</option>
+                        <option value="{{ e.id }}">{{ e.nombre }}</option>
                     {% endfor %}
                 </select>
             </div>

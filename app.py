@@ -480,9 +480,8 @@ def empleados():
     try:
         with conn.cursor(pymysql.cursors.DictCursor) as cursor:
             cursor.execute("""
-                SELECT e.*, u.role 
+                SELECT e.* 
                 FROM empleados e
-                LEFT JOIN usuarios u ON e.usuario_id = u.id
                 ORDER BY e.nombre
             """)
             empleados = cursor.fetchall()
@@ -500,7 +499,6 @@ def actualizar_empleado():
     nombre = request.form.get('nombre', '').strip()
     email = request.form.get('email', '').strip()
     telefono = request.form.get('telefono', '').strip()
-    especialidad = request.form.get('especialidad', '').strip()
     foto = request.files.get("foto")
     
     # Validaciones
@@ -548,15 +546,15 @@ def actualizar_empleado():
                 if filename:
                     cursor.execute("""
                         UPDATE empleados
-                        SET nombre=%s, email=%s, telefono=%s, especialidad=%s, foto=%s
+                        SET nombre=%s, email=%s, telefono=%s, foto=%s
                         WHERE id=%s
-                    """, (nombre, email, telefono, especialidad, filename, id_empleado))
+                    """, (nombre, email, telefono, filename, id_empleado))
                 else:
                     cursor.execute("""
                         UPDATE empleados
-                        SET nombre=%s, email=%s, telefono=%s, especialidad=%s
+                        SET nombre=%s, email=%s, telefono=%s
                         WHERE id=%s
-                    """, (nombre, email, telefono, especialidad, id_empleado))
+                    """, (nombre, email, telefono, id_empleado))
                 
                 # Actualizar también en usuarios si corresponde
                 cursor.execute("""
@@ -789,7 +787,7 @@ def citas():
             cursor.execute("SELECT id, nombre_servicio, precio, duracion FROM servicios ORDER BY nombre_servicio")
             servicios = cursor.fetchall()
             
-            cursor.execute("SELECT id, nombre, especialidad FROM empleados ORDER BY nombre")
+            cursor.execute("SELECT id, nombre FROM empleados ORDER BY nombre")
             empleados = cursor.fetchall()
     finally:
         conn.close()
