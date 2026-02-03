@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, redirect, send_from_directory
 import os
 import platform
 import psutil
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, time
 import uuid
 import re
 from pathlib import Path
@@ -936,6 +936,11 @@ def editar_cita():
                 flash("Cita no encontrada", "error")
                 return redirect("/citas")
             
+            # VERIFICAR SI LA CITA ESTÁ FINALIZADA
+            if cita.get('estado') == 'finalizada':
+                flash("❌ No puedes editar una cita que ya ha sido finalizada", "error")
+                return redirect(f"/citas?fecha={cita['fecha']}")
+            
             # Obtener listas
             cursor.execute("SELECT id, nombre FROM clientes ORDER BY nombre")
             clientes = cursor.fetchall()
@@ -974,21 +979,45 @@ def actualizar_cita():
     
     conn = get_connection()
     try:
-        with conn.cursor() as cursor:
-            # Verificar conflicto de cliente
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+
+            # Verificar si la cita está finalizada
+            cursor.execute(
+                "SELECT estado, fecha FROM citas WHERE id = %s",
+                (id_cita,)
+            )
+            cita = cursor.fetchone()
+
+            if not cita:
+                flash("Cita no encontrada", "error")
+                return redirect("/citas")
+
+            if cita['estado'] == 'finalizada':
+                flash("❌ No puedes editar una cita que ya fue finalizada", "error")
+                return redirect(f"/citas?fecha={cita['fecha']}")
+
+            # Verificar conflicto de cliente (hora exacta)
             cursor.execute("""
                 SELECT id FROM citas
-                WHERE id_cliente = %s AND fecha = %s AND hora = %s AND id != %s
+                WHERE id_cliente = %s 
+                AND fecha = %s 
+                AND hora = %s 
+                AND id != %s
+                AND estado != 'finalizada'
             """, (id_cliente, fecha, hora, id_cita))
             
             if cursor.fetchone():
                 flash("⚠ El cliente ya tiene una cita en ese horario.", "warning")
                 return redirect(f"/editar_cita?id={id_cita}")
             
-            # Verificar conflicto de empleado
+            # Verificar conflicto de empleado (hora exacta)
             cursor.execute("""
                 SELECT id FROM citas
-                WHERE id_empleado = %s AND fecha = %s AND hora = %s AND id != %s
+                WHERE id_empleado = %s 
+                AND fecha = %s 
+                AND hora = %s 
+                AND id != %s
+                AND estado != 'finalizada'
             """, (id_empleado, fecha, hora, id_cita))
             
             if cursor.fetchone():
@@ -998,16 +1027,22 @@ def actualizar_cita():
             # Actualizar cita
             cursor.execute("""
                 UPDATE citas
-                SET id_cliente=%s, id_servicio=%s, id_empleado=%s, fecha=%s, hora=%s
+                SET id_cliente=%s,
+                    id_servicio=%s,
+                    id_empleado=%s,
+                    fecha=%s,
+                    hora=%s
                 WHERE id = %s
             """, (id_cliente, id_servicio, id_empleado, fecha, hora, id_cita))
             
             conn.commit()
+
     finally:
         conn.close()
     
-    flash("Cita actualizada exitosamente", "success")
+    flash("✅ Cita actualizada exitosamente", "success")
     return redirect(f"/citas?fecha={fecha}")
+
 
 @app.route('/finalizar_cita', methods=['POST'])
 @login_required

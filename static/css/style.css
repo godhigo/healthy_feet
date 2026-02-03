@@ -1411,3 +1411,31 @@ body {
         width: 100%;
     }
 }
+
+/* Estilo para botones deshabilitados */
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-secondary:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Estilo para mensajes de alerta */
+.swal2-html-container {
+    text-align: left !important;
+}
+
+/* Animación para botones deshabilitados */
+.btn[disabled] {
+    animation: pulse-disabled 2s infinite;
+}
+
+@keyframes pulse-disabled {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.4; }
+}

@@ -181,12 +181,14 @@
                 </form>
                 
                 {% if cita.estado != 'finalizada' %}
-                <form method="POST" action="{{ url_for('finalizar_cita') }}" class="d-inline no-confirm">
-                    <input type="hidden" name="id_cita" value="{{ cita.id }}">
-                    <button type="submit" class="btn btn-success btn-sm">
-                        <i class="fas fa-check-circle"></i> Finalizar
-                    </button>
-                </form>
+                <button type="button" 
+                        class="btn btn-success btn-sm finalizar-cita-btn" 
+                        data-cita-id="{{ cita.id }}"
+                        data-cita-cliente="{{ cita.nombre_cliente }}"
+                        data-cita-fecha="{{ cita.fecha }}"
+                        data-cita-hora="{{ cita.hora }}">
+                    <i class="fas fa-check-circle"></i> Finalizar
+                </button>
                 {% else %}
                 <button class="btn btn-success btn-sm" disabled>
                     <i class="fas fa-check-circle"></i> Finalizada
@@ -236,6 +238,113 @@ document.addEventListener('DOMContentLoaded', function() {
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
         });
     }
+});
+</script>
+
+<script>
+// Confirmación para finalizar cita
+document.addEventListener('DOMContentLoaded', function() {
+    const finalizarBtns = document.querySelectorAll('.finalizar-cita-btn');
+    
+    finalizarBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const citaId = this.getAttribute('data-cita-id');
+            const cliente = this.getAttribute('data-cita-cliente');
+            const fecha = this.getAttribute('data-cita-fecha');
+            const hora = this.getAttribute('data-cita-hora');
+            
+            // Formatear fecha
+            const fechaFormateada = new Date(fecha).toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            // Formatear hora
+            const horaFormateada = new Date(`2000-01-01T${hora}`).toLocaleTimeString('es-MX', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Mostrar SweetAlert o confirm nativo
+            if (typeof Swal !== 'undefined') {
+                // Usar SweetAlert si está disponible
+                Swal.fire({
+                    title: '¿Finalizar Cita?',
+                    html: `
+                        <div class="text-left">
+                            <p><strong>Cliente:</strong> ${cliente}</p>
+                            <p><strong>Fecha:</strong> ${fechaFormateada}</p>
+                            <p><strong>Hora:</strong> ${horaFormateada}</p>
+                            <p class="text-danger mt-2">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>¡ATENCIÓN!</strong> Una vez finalizada, no podrás editar esta cita.
+                            </p>
+                        </div>
+                    `,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, finalizar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Crear formulario dinámico para enviar
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = "{{ url_for('finalizar_cita') }}";
+                        
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'id_cita';
+                        input.value = citaId;
+                        
+                        form.appendChild(input);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            } else {
+                // Usar confirm nativo
+                const mensaje = `¿Estás seguro que deseas finalizar la cita de ${cliente}?\n\n` +
+                              `Fecha: ${fechaFormateada}\n` +
+                              `Hora: ${horaFormateada}\n\n` +
+                              `⚠️ ¡ATENCIÓN! Una vez finalizada, no podrás editar esta cita.`;
+                
+                if (confirm(mensaje)) {
+                    // Crear formulario dinámico
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = "{{ url_for('finalizar_cita') }}";
+                    
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'id_cita';
+                    input.value = citaId;
+                    
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            }
+        });
+    });
+    
+    // Deshabilitar botón de editar si la cita está finalizada
+    const citaCards = document.querySelectorAll('.cita-card');
+    citaCards.forEach(card => {
+        const estadoBadge = card.querySelector('.badge-success');
+        if (estadoBadge && estadoBadge.textContent.includes('Finalizada')) {
+            const editarBtn = card.querySelector('form[action*="editar_cita"] button');
+            if (editarBtn) {
+                editarBtn.disabled = true;
+                editarBtn.classList.remove('btn-outline');
+                editarBtn.classList.add('btn-secondary');
+                editarBtn.innerHTML = '<i class="fas fa-lock"></i> Bloqueada';
+            }
+        }
+    });
 });
 </script>
 {% endblock %}
