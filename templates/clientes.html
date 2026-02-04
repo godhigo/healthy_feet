@@ -126,6 +126,8 @@
                                                 {% if cita.estado %}
                                                     {% if cita.estado == 'finalizada' %}
                                                         <span class="badge badge-success">{{ cita.estado }}</span>
+                                                    {% elif cita.estado == 'cancelada' %}
+                                                        <span class="badge badge-danger">{{ cita.estado }}</span>
                                                     {% else %}
                                                         <span class="badge badge-warning">{{ cita.estado }}</span>
                                                     {% endif %}

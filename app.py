@@ -1094,6 +1094,54 @@ def finalizar_cita():
     flash("Cita finalizada y venta registrada exitosamente", "success")
     return redirect(f"/citas?fecha={cita['fecha']}")
 
+@app.route('/cancelar_cita', methods=['POST'])
+@login_required
+@handle_db_errors
+def cancelar_cita():
+    """Cancelar cita y mover a historial"""
+    id_cita = request.form.get('id_cita')
+    
+    if not id_cita:
+        flash("ID de cita no proporcionado", "error")
+        return redirect("/citas")
+    
+    conn = get_connection()
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            # Obtener datos de la cita
+            cursor.execute("""
+                SELECT id_cliente, id_empleado, id_servicio, fecha, hora
+                FROM citas
+                WHERE id = %s
+            """, (id_cita,))
+            cita = cursor.fetchone()
+            
+            if not cita:
+                flash("Cita no encontrada", "error")
+                return redirect("/citas")
+            
+            # Mover a historial
+            cursor.execute("""
+                INSERT INTO citas_historial (id_cliente, id_empleado, id_servicio, fecha, hora, estado)
+                SELECT id_cliente, id_empleado, id_servicio, fecha, hora, 'cancelada'
+                FROM citas
+                WHERE id = %s
+            """, (id_cita,))
+            
+            # Actualizar estado de la cita a 'cancelada' (o eliminarla si prefieres)
+            cursor.execute("""
+                UPDATE citas
+                SET estado = 'cancelada'
+                WHERE id = %s
+            """, (id_cita,))
+            
+            conn.commit()
+    finally:
+        conn.close()
+    
+    flash("Cita cancelada exitosamente", "info")
+    return redirect(f"/citas?fecha={cita['fecha']}")
+
 # ============================================================================
 # RUTAS DE VENTAS
 # ============================================================================

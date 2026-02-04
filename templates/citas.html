@@ -166,6 +166,10 @@
                     <strong>Estado:</strong> 
                     {% if cita.estado == 'finalizada' %}
                         <span class="badge badge-success">Finalizada</span>
+                    {% elif cita.estado == 'cancelada' %}
+                        <span class="badge badge-danger">Cancelada</span>
+                    {% elif cita.estado == 'confirmada' %}
+                        <span class="badge badge-info">Confirmada</span>
                     {% else %}
                         <span class="badge badge-warning">Pendiente</span>
                     {% endif %}
@@ -180,7 +184,7 @@
                     </button>
                 </form>
                 
-                {% if cita.estado != 'finalizada' %}
+                {% if cita.estado != 'finalizada' and cita.estado != 'cancelada' %}
                 <button type="button" 
                         class="btn btn-success btn-sm finalizar-cita-btn" 
                         data-cita-id="{{ cita.id }}"
@@ -189,9 +193,22 @@
                         data-cita-hora="{{ cita.hora }}">
                     <i class="fas fa-check-circle"></i> Finalizar
                 </button>
-                {% else %}
+
+                <button type="button"
+                        class="btn btn-danger btn-sm cancelar-cita-btn"
+                        data-cita-id="{{ cita.id }}"
+                        data-cita-cliente="{{ cita.nombre_cliente }}"
+                        data-cita-fecha="{{ cita.fecha }}"
+                        data-cita-hora="{{ cita.hora }}">
+                    <i class="fas fa-times-circle"></i> Cancelar
+                </button>
+                {% elif cita.estado == 'finalizada' %}
                 <button class="btn btn-success btn-sm" disabled>
                     <i class="fas fa-check-circle"></i> Finalizada
+                </button>
+                {% elif cita.estado == 'cancelada' %}
+                <button class="btn btn-secondary btn-sm" disabled>
+                    <i class="fas fa-ban"></i> Cancelada
                 </button>
                 {% endif %}
             </div>
@@ -208,6 +225,7 @@
 </div>
 
 <script>
+// Mostrar/ocultar formulario nueva cita
 document.addEventListener('DOMContentLoaded', function() {
     const toggleBtn = document.getElementById('toggle-form');
     const cancelBtn = document.getElementById('cancel-form');
@@ -238,10 +256,23 @@ document.addEventListener('DOMContentLoaded', function() {
             this.value = this.value.replace(/\D/g, '').slice(0, 10);
         });
     }
+    
+    // Formatear hora automáticamente en input time
+    const horaInput = document.getElementById('hora');
+    if (horaInput) {
+        horaInput.addEventListener('change', function(e) {
+            // Asegurar que sea en intervalos de 15 minutos
+            const time = this.value.split(':');
+            if (time.length === 2) {
+                const minutes = parseInt(time[1]);
+                const roundedMinutes = Math.round(minutes / 15) * 15;
+                time[1] = roundedMinutes.toString().padStart(2, '0');
+                this.value = time.join(':');
+            }
+        });
+    }
 });
-</script>
 
-<script>
 // Confirmación para finalizar cita
 document.addEventListener('DOMContentLoaded', function() {
     const finalizarBtns = document.querySelectorAll('.finalizar-cita-btn');
@@ -330,21 +361,154 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+});
+
+// Confirmación para cancelar cita
+document.addEventListener('DOMContentLoaded', function() {
+    const cancelarBtns = document.querySelectorAll('.cancelar-cita-btn');
     
-    // Deshabilitar botón de editar si la cita está finalizada
+    cancelarBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const citaId = this.getAttribute('data-cita-id');
+            const cliente = this.getAttribute('data-cita-cliente');
+            const fecha = this.getAttribute('data-cita-fecha');
+            const hora = this.getAttribute('data-cita-hora');
+            
+            // Formatear fecha
+            const fechaFormateada = new Date(fecha).toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            // Formatear hora
+            const horaFormateada = new Date(`2000-01-01T${hora}`).toLocaleTimeString('es-MX', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Mostrar confirmación
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '¿Cancelar Cita?',
+                    html: `
+                        <div class="text-left">
+                            <p><strong>Cliente:</strong> ${cliente}</p>
+                            <p><strong>Fecha:</strong> ${fechaFormateada}</p>
+                            <p><strong>Hora:</strong> ${horaFormateada}</p>
+                            <p class="text-danger mt-2">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>¡ATENCIÓN!</strong> Esta acción no se puede deshacer.
+                            </p>
+                        </div>
+                    `,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, cancelar',
+                    cancelButtonText: 'Volver'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Crear formulario para cancelar
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = "{{ url_for('cancelar_cita') }}";
+                        
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'id_cita';
+                        input.value = citaId;
+                        
+                        form.appendChild(input);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            } else {
+                const mensaje = `¿Estás seguro que deseas cancelar la cita de ${cliente}?\n\n` +
+                              `Fecha: ${fechaFormateada}\n` +
+                              `Hora: ${horaFormateada}\n\n` +
+                              `⚠️ ¡ATENCIÓN! Esta acción no se puede deshacer.`;
+                
+                if (confirm(mensaje)) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = "{{ url_for('cancelar_cita') }}";
+                    
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'id_cita';
+                    input.value = citaId;
+                    
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            }
+        });
+    });
+});
+
+// Deshabilitar botón de editar si la cita está finalizada o cancelada
+document.addEventListener('DOMContentLoaded', function() {
     const citaCards = document.querySelectorAll('.cita-card');
     citaCards.forEach(card => {
-        const estadoBadge = card.querySelector('.badge-success');
-        if (estadoBadge && estadoBadge.textContent.includes('Finalizada')) {
+        const estadoBadge = card.querySelector('.badge-success, .badge-danger');
+        if (estadoBadge && (estadoBadge.textContent.includes('Finalizada') || estadoBadge.textContent.includes('Cancelada'))) {
             const editarBtn = card.querySelector('form[action*="editar_cita"] button');
             if (editarBtn) {
                 editarBtn.disabled = true;
                 editarBtn.classList.remove('btn-outline');
                 editarBtn.classList.add('btn-secondary');
-                editarBtn.innerHTML = '<i class="fas fa-lock"></i> Bloqueada';
+                if (estadoBadge.textContent.includes('Finalizada')) {
+                    editarBtn.innerHTML = '<i class="fas fa-lock"></i> Finalizada';
+                } else {
+                    editarBtn.innerHTML = '<i class="fas fa-ban"></i> Cancelada';
+                }
+            }
+            
+            // También deshabilitar botones de finalizar/cancelar
+            const finalizarBtn = card.querySelector('.finalizar-cita-btn');
+            if (finalizarBtn) {
+                finalizarBtn.disabled = true;
+                finalizarBtn.classList.remove('btn-success');
+                finalizarBtn.classList.add('btn-secondary');
+            }
+            
+            const cancelarBtn = card.querySelector('.cancelar-cita-btn');
+            if (cancelarBtn) {
+                cancelarBtn.disabled = true;
+                cancelarBtn.classList.remove('btn-danger');
+                cancelarBtn.classList.add('btn-secondary');
             }
         }
     });
 });
+
+// Función para manejar conflictos de horarios (opcional)
+function checkHorarioDisponible(id_empleado, fecha, hora, duracion, callback) {
+    // Esta función podría implementarse para verificar disponibilidad en tiempo real
+    fetch('/api/check_horario', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            id_empleado: id_empleado,
+            fecha: fecha,
+            hora: hora,
+            duracion: duracion
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        callback(data.disponible, data.mensaje);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        callback(false, 'Error al verificar horario');
+    });
+}
 </script>
 {% endblock %}
