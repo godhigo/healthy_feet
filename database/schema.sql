@@ -220,4 +220,3 @@ ORDER BY total_gastado DESC;
 CREATE INDEX idx_ventas_fecha_cliente ON ventas(fecha, id_cliente);
 CREATE INDEX idx_citas_fecha_hora ON citas(fecha, hora);
 CREATE INDEX idx_clientes_nombre_telefono ON clientes(nombre, telefono);
-CREATE INDEX idx_empleados_especialidad ON empleados(especialidad);

@@ -709,23 +709,14 @@ def clientes():
             historial = {}
             for cliente in clientes:
                 cursor.execute("""
-                    SELECT c.fecha, c.hora, s.nombre_servicio, e.nombre AS empleado, 'pendiente' as estado
+                    SELECT c.fecha, c.hora, s.nombre_servicio, e.nombre AS empleado, c.estado
                     FROM citas c
                     JOIN servicios s ON c.id_servicio = s.id
                     JOIN empleados e ON c.id_empleado = e.id
                     WHERE c.id_cliente = %s
-                    
-                    UNION
-                    
-                    SELECT h.fecha, h.hora, s.nombre_servicio, e.nombre AS empleado, h.estado
-                    FROM citas_historial h
-                    JOIN servicios s ON h.id_servicio = s.id
-                    JOIN empleados e ON h.id_empleado = e.id
-                    WHERE h.id_cliente = %s
-                    
                     ORDER BY fecha DESC, hora DESC
                     LIMIT 10
-                """, (cliente['id'], cliente['id']))
+                """, (cliente['id'],))
                 
                 historial[cliente['id']] = cursor.fetchall()
     finally:
