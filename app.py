@@ -921,9 +921,9 @@ def editar_cita():
                 flash("Cita no encontrada", "error")
                 return redirect("/citas")
             
-            # VERIFICAR SI LA CITA ESTÁ FINALIZADA
-            if cita.get('estado') == 'finalizada':
-                flash("❌ No puedes editar una cita que ya ha sido finalizada", "error")
+            # VERIFICAR SI LA CITA ESTÁ FINALIZADA O CANCELADA
+            if cita.get('estado') in ['finalizada', 'cancelada']:
+                flash("❌ No puedes editar una cita que ya ha sido finalizada o cancelada", "error")
                 return redirect(f"/citas?fecha={cita['fecha']}")
             
             # Obtener listas
@@ -966,7 +966,7 @@ def actualizar_cita():
     try:
         with conn.cursor(pymysql.cursors.DictCursor) as cursor:
 
-            # Verificar si la cita está finalizada
+            # Verificar si la cita está finalizada o cancelada
             cursor.execute(
                 "SELECT estado, fecha FROM citas WHERE id = %s",
                 (id_cita,)
@@ -977,8 +977,8 @@ def actualizar_cita():
                 flash("Cita no encontrada", "error")
                 return redirect("/citas")
 
-            if cita['estado'] == 'finalizada':
-                flash("❌ No puedes editar una cita que ya fue finalizada", "error")
+            if cita['estado'] in  ['finalizada', 'cancelada']:
+                flash("❌ No puedes editar una cita que ya ha sido finalizada o cancelada", "error")
                 return redirect(f"/citas?fecha={cita['fecha']}")
 
             # Verificar conflicto de cliente (hora exacta)
