@@ -826,8 +826,8 @@ def agregar_cita():
             # CLIENTE
             # --------------------------
             cursor.execute(
-                "SELECT id FROM clientes WHERE nombre = %s AND telefono = %s",
-                (nombre_cliente, telefono)
+                "SELECT id, nombre FROM clientes WHERE telefono = %s",
+                (telefono, )
             )
             cliente_existente = cursor.fetchone()
             
