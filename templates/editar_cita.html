@@ -36,21 +36,27 @@
             <input type="hidden" name="id" value="{{ cita.id }}">
             
             <div class="grid grid-2 gap-4">
+                <!-- NOMBRE DEL CLIENTE (EDITABLE) -->
                 <div class="form-group">
-                    <label for="id_cliente" class="form-label">Cliente</label>
-                    <select id="id_cliente" name="id_cliente" class="form-control" required>
-                        <option value="">Seleccionar cliente...</option>
-                        {% for cliente in clientes %}
-                            <option value="{{ cliente.id }}" 
-                                {% if cliente.id == cita.id_cliente %}selected{% endif %}>
-                                {{ cliente.nombre }}
-                            </option>
-                        {% endfor %}
-                    </select>
+                    <label for="cliente_nombre" class="form-label">Cliente *</label>
+                    <input type="text" 
+                           id="cliente_nombre" 
+                           name="cliente_nombre" 
+                           class="form-control" 
+                           value="{{ cita.cliente_nombre }}"
+                           required
+                           minlength="2"
+                           placeholder="Nombre del cliente">
+                    
+                    <input type="hidden" 
+                           id="id_cliente" 
+                           name="id_cliente" 
+                           value="{{ cita.id_cliente }}">
                 </div>
                 
+                <!-- SERVICIO (LISTA DESPLEGABLE) -->
                 <div class="form-group">
-                    <label for="id_servicio" class="form-label">Servicio</label>
+                    <label for="id_servicio" class="form-label">Servicio *</label>
                     <select id="id_servicio" name="id_servicio" class="form-control" required>
                         <option value="">Seleccionar servicio...</option>
                         {% for servicio in servicios %}
@@ -62,8 +68,9 @@
                     </select>
                 </div>
                 
+                <!-- EMPLEADO (LISTA DESPLEGABLE) -->
                 <div class="form-group">
-                    <label for="id_empleado" class="form-label">Empleado</label>
+                    <label for="id_empleado" class="form-label">Empleado *</label>
                     <select id="id_empleado" name="id_empleado" class="form-control" required>
                         <option value="">Seleccionar empleado...</option>
                         {% for empleado in empleados %}
@@ -75,8 +82,9 @@
                     </select>
                 </div>
                 
+                <!-- FECHA -->
                 <div class="form-group">
-                    <label for="fecha" class="form-label">Fecha</label>
+                    <label for="fecha" class="form-label">Fecha *</label>
                     <input type="date" 
                            id="fecha" 
                            name="fecha" 
@@ -85,8 +93,9 @@
                            required>
                 </div>
                 
+                <!-- HORA -->
                 <div class="form-group">
-                    <label for="hora" class="form-label">Hora</label>
+                    <label for="hora" class="form-label">Hora *</label>
                     <input type="time" 
                            id="hora" 
                            name="hora" 

@@ -953,20 +953,25 @@ def actualizar_cita():
     """Actualizar cita existente"""
     id_cita = request.form.get('id')
     id_cliente = request.form.get('id_cliente')
+    cliente_nombre = request.form.get('cliente_nombre', '').strip()  # NUEVO: nombre editable
     id_servicio = request.form.get('id_servicio')
     id_empleado = request.form.get('id_empleado')
     fecha = request.form.get('fecha')
     hora = request.form.get('hora')
     
-    if not all([id_cita, id_cliente, id_servicio, id_empleado, fecha, hora]):
+    if not all([id_cita, id_cliente, cliente_nombre, id_servicio, id_empleado, fecha, hora]):
         flash("Todos los campos son requeridos", "error")
+        return redirect(f"/editar_cita?id={id_cita}")
+    
+    # Validar nombre
+    if len(cliente_nombre) < 2:
+        flash("El nombre debe tener al menos 2 caracteres", "error")
         return redirect(f"/editar_cita?id={id_cita}")
     
     conn = get_connection()
     try:
         with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-
-            # Verificar si la cita está finalizada o cancelada
+            # 1. Verificar si la cita está finalizada o cancelada
             cursor.execute(
                 "SELECT estado, fecha FROM citas WHERE id = %s",
                 (id_cita,)
@@ -977,11 +982,17 @@ def actualizar_cita():
                 flash("Cita no encontrada", "error")
                 return redirect("/citas")
 
-            if cita['estado'] in  ['finalizada', 'cancelada']:
+            if cita['estado'] in ['finalizada', 'cancelada']:
                 flash("❌ No puedes editar una cita que ya ha sido finalizada o cancelada", "error")
                 return redirect(f"/citas?fecha={cita['fecha']}")
 
-            # Verificar conflicto de cliente (hora exacta)
+            # 2. ACTUALIZAR EL NOMBRE DEL CLIENTE (NUEVO)
+            cursor.execute(
+                "UPDATE clientes SET nombre = %s WHERE id = %s",
+                (cliente_nombre, id_cliente)
+            )
+
+            # 3. Verificar conflicto de cliente (hora exacta)
             cursor.execute("""
                 SELECT id FROM citas
                 WHERE id_cliente = %s 
@@ -995,7 +1006,7 @@ def actualizar_cita():
                 flash("⚠ El cliente ya tiene una cita en ese horario.", "warning")
                 return redirect(f"/editar_cita?id={id_cita}")
             
-            # Verificar conflicto de empleado (hora exacta)
+            # 4. Verificar conflicto de empleado (hora exacta)
             cursor.execute("""
                 SELECT id FROM citas
                 WHERE id_empleado = %s 
@@ -1009,16 +1020,15 @@ def actualizar_cita():
                 flash("⚠ El empleado ya tiene una cita en ese horario.", "warning")
                 return redirect(f"/editar_cita?id={id_cita}")
             
-            # Actualizar cita
+            # 5. Actualizar cita (YA NO ACTUALIZAMOS id_cliente, solo los otros campos)
             cursor.execute("""
                 UPDATE citas
-                SET id_cliente=%s,
-                    id_servicio=%s,
+                SET id_servicio=%s,
                     id_empleado=%s,
                     fecha=%s,
                     hora=%s
                 WHERE id = %s
-            """, (id_cliente, id_servicio, id_empleado, fecha, hora, id_cita))
+            """, (id_servicio, id_empleado, fecha, hora, id_cita))
             
             conn.commit()
 
@@ -1027,7 +1037,6 @@ def actualizar_cita():
     
     flash("✅ Cita actualizada exitosamente", "success")
     return redirect(f"/citas?fecha={fecha}")
-
 
 @app.route('/finalizar_cita', methods=['POST'])
 @login_required
