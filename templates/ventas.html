@@ -89,6 +89,7 @@
                     <th>Cliente</th>
                     <th>Empleado</th>
                     <th>Servicio</th>
+                    <th>Método de pago</th>
                     <th>Total</th>
                     <th>Acciones</th>
                 </tr>
@@ -112,6 +113,23 @@
                     <td>
                         <i class="fas fa-spa text-primary"></i>
                         {{ venta.servicio }}
+                    </td>
+                    <td>
+                        {% if venta.metodo_pago == 'efectivo' %}
+                            <span class="badge badge-success">
+                                <i class="fas fa-money-bill-wave"></i> Efectivo
+                            </span>
+                        {% elif venta.metodo_pago == 'tarjeta' %}
+                            <span class="badge badge-primary">
+                                <i class="fas fa-credit-card"></i> Tarjeta
+                            </span>
+                        {% elif venta.metodo_pago == 'transferencia' %}
+                            <span class="badge badge-warning">
+                                <i class="fas fa-university"></i> Transferencia
+                            </span>
+                        {% else %}
+                            <span class="badge badge-secondary">{{ venta.metodo_pago }}</span>
+                        {% endif %}
                     </td>
                     <td>
                         <span class="badge badge-success">${{ venta.total }}</span>

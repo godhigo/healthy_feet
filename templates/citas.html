@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Confirmación para finalizar cita
+// Versión simplificada sin SweetAlert
 document.addEventListener('DOMContentLoaded', function() {
     const finalizarBtns = document.querySelectorAll('.finalizar-cita-btn');
     
@@ -297,68 +297,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 minute: '2-digit'
             });
             
-            // Mostrar SweetAlert o confirm nativo
-            if (typeof Swal !== 'undefined') {
-                // Usar SweetAlert si está disponible
-                Swal.fire({
-                    title: '¿Finalizar Cita?',
-                    html: `
-                        <div class="text-left">
-                            <p><strong>Cliente:</strong> ${cliente}</p>
-                            <p><strong>Fecha:</strong> ${fechaFormateada}</p>
-                            <p><strong>Hora:</strong> ${horaFormateada}</p>
-                            <p class="text-danger mt-2">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <strong>¡ATENCIÓN!</strong> Una vez finalizada, no podrás editar esta cita.
-                            </p>
-                        </div>
-                    `,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Sí, finalizar',
-                    cancelButtonText: 'Cancelar'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Crear formulario dinámico para enviar
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = "{{ url_for('finalizar_cita') }}";
-                        
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'id_cita';
-                        input.value = citaId;
-                        
-                        form.appendChild(input);
-                        document.body.appendChild(form);
-                        form.submit();
-                    }
-                });
-            } else {
-                // Usar confirm nativo
-                const mensaje = `¿Estás seguro que deseas finalizar la cita de ${cliente}?\n\n` +
-                              `Fecha: ${fechaFormateada}\n` +
-                              `Hora: ${horaFormateada}\n\n` +
-                              `⚠️ ¡ATENCIÓN! Una vez finalizada, no podrás editar esta cita.`;
-                
-                if (confirm(mensaje)) {
-                    // Crear formulario dinámico
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = "{{ url_for('finalizar_cita') }}";
+            // Crear formulario dinámico con método de pago seleccionado
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ url_for('finalizar_cita') }}";
+            form.innerHTML = `
+                <input type="hidden" name="id_cita" value="${citaId}">
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; margin: 10px 0;">
+                    <p><strong>Cliente:</strong> ${cliente}</p>
+                    <p><strong>Fecha:</strong> ${fechaFormateada}</p>
+                    <p><strong>Hora:</strong> ${horaFormateada}</p>
                     
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'id_cita';
-                    input.value = citaId;
+                    <label style="display: block; margin: 10px 0 5px 0;"><strong>Método de Pago:</strong></label>
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 5px;">
+                            <input type="radio" name="metodo_pago" value="efectivo" checked> Efectivo
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px;">
+                            <input type="radio" name="metodo_pago" value="tarjeta"> Tarjeta
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px;">
+                            <input type="radio" name="metodo_pago" value="transferencia"> Transferencia
+                        </label>
+                    </div>
                     
-                    form.appendChild(input);
-                    document.body.appendChild(form);
-                    form.submit();
-                }
-            }
+                    <p style="color: #dc3545; margin-top: 15px;">
+                        <strong>¡ATENCIÓN!</strong> Una vez finalizada, no podrás editar esta cita.
+                    </p>
+                </div>
+                <div style="text-align: center; margin-top: 15px;">
+                    <button type="submit" style="background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 4px; margin-right: 10px;">
+                        Sí, finalizar
+                    </button>
+                    <button type="button" onclick="this.closest('form').remove()" style="background: #6c757d; color: white; border: none; padding: 8px 20px; border-radius: 4px;">
+                        Cancelar
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(form);
         });
     });
 });

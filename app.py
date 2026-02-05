@@ -397,7 +397,7 @@ def index():
     try:
         with conn.cursor() as cursor:
             # Citas del día
-            cursor.execute("SELECT COUNT(*) as count FROM citas WHERE fecha = CURDATE()")
+            cursor.execute("SELECT COUNT(*) as count FROM citas WHERE fecha = CURDATE() AND estado != 'cancelada'")
             citas_dia = cursor.fetchone()['count']
             
             # Total clientes
@@ -1049,6 +1049,7 @@ def actualizar_cita():
 def finalizar_cita():
     """Finalizar cita y crear venta"""
     id_cita = request.form.get('id_cita')
+    metodo_pago = request.form.get('metodo_pago', 'efectivo')
     
     if not id_cita:
         flash("ID de cita no proporcionado", "error")
@@ -1076,14 +1077,15 @@ def finalizar_cita():
             
             # Crear venta
             cursor.execute("""
-                INSERT INTO ventas (id_cliente, id_empleado, id_servicio, fecha, total)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO ventas (id_cliente, id_empleado, id_servicio, fecha, total, metodo_pago)
+                VALUES (%s, %s, %s, %s, %s, %s)
             """, (
                 cita['id_cliente'],
                 cita['id_empleado'],
                 cita['id_servicio'],
                 cita['fecha'],
-                precio
+                precio,
+                metodo_pago
             ))
             
             # Mover a historial
@@ -1105,7 +1107,7 @@ def finalizar_cita():
     finally:
         conn.close()
     
-    flash("Cita finalizada y venta registrada exitosamente", "success")
+    flash(f"Cita finalizada y venta registrada exitosamente (Pago: {metodo_pago})", "success")
     return redirect(f"/citas?fecha={cita['fecha']}")
 
 @app.route('/cancelar_cita', methods=['POST'])
@@ -1170,7 +1172,7 @@ def ventas():
     # Construir consulta base
     query_base = """
         SELECT v.id, c.nombre AS cliente, e.nombre AS empleado, 
-               s.nombre_servicio AS servicio, v.fecha, v.total
+               s.nombre_servicio AS servicio, v.fecha, v.total, v.metodo_pago
         FROM ventas v
         JOIN clientes c ON v.id_cliente = c.id
         JOIN empleados e ON v.id_empleado = e.id
