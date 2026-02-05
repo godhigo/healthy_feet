@@ -837,7 +837,10 @@ def agregar_cita():
             # --------------------------
             cursor.execute("""
                 SELECT id FROM citas
-                WHERE id_cliente = %s AND fecha = %s AND hora = %s
+                WHERE id_cliente = %s 
+                AND fecha = %s 
+                AND hora = %s
+                AND estado NOT IN ('cancelada', 'finalizada')
             """, (id_cliente, fecha, hora))
             
             if cursor.fetchone():
@@ -867,7 +870,9 @@ def agregar_cita():
                 SELECT c.hora, s.duracion
                 FROM citas c
                 JOIN servicios s ON c.id_servicio = s.id
-                WHERE c.id_empleado = %s AND c.fecha = %s
+                WHERE c.id_empleado = %s 
+                AND c.fecha = %s
+                AND c.estado NOT IN ('cancelada', 'finalizada')
             """, (id_empleado, fecha))
             
             citas_empleado = cursor.fetchall()
@@ -999,7 +1004,7 @@ def actualizar_cita():
                 AND fecha = %s 
                 AND hora = %s 
                 AND id != %s
-                AND estado != 'finalizada'
+                AND estado NOT IN ('cancelada', 'finalizada')
             """, (id_cliente, fecha, hora, id_cita))
             
             if cursor.fetchone():
@@ -1013,7 +1018,7 @@ def actualizar_cita():
                 AND fecha = %s 
                 AND hora = %s 
                 AND id != %s
-                AND estado != 'finalizada'
+                AND estado NOT IN ('cancelada', 'finalizada')
             """, (id_empleado, fecha, hora, id_cita))
             
             if cursor.fetchone():
