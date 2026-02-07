@@ -571,11 +571,13 @@ body {
 
 .content-header {
     background: white;
+    border-radius: var(--border-radius);
     padding: var(--spacing-lg) var(--spacing-xl);
     box-shadow: var(--box-shadow-sm);
     position: sticky;
     top: 0;
     z-index: 100;
+    margin-bottom: 10px;
 }
 
 .content-title {
@@ -1030,23 +1032,6 @@ body {
     overflow-y: hidden;
     display: flex;
     flex-direction: column;
-}
-
-.dashboard-header {
-    margin-bottom: 1rem;
-    padding: 0.5rem;
-}
-
-.dashboard-title {
-    font-size: 1.5rem;
-    color: var(--primary-color);
-    margin: 0;
-}
-
-.dashboard-subtitle {
-    color: var(--gray-dark);
-    font-size: 0.875rem;
-    margin: 0;
 }
 
 /* Estadísticas compactas */
