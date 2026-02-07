@@ -236,17 +236,51 @@ CREATE INDEX idx_clientes_nombre_telefono ON clientes(nombre, telefono);
 
 CREATE TABLE IF NOT EXISTS `plantillas` (
   `id` INT PRIMARY KEY AUTO_INCREMENT,
-  `nombre` VARCHAR(100) NOT NULL,
-  `descripcion` TEXT NULL,
-  `contenido` TEXT NOT NULL,
-  `tipo` ENUM('cita', 'recordatorio', 'promocion', 'general') DEFAULT 'general',
-  `estado` ENUM('activo', 'inactivo') DEFAULT 'activo',
-  `fecha_creacion` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX `idx_nombre` (`nombre`),
-  INDEX `idx_tipo` (`tipo`)
+  `id_cliente` INT NOT NULL,
+  `codigo` VARCHAR(50) NOT NULL UNIQUE,
+  `tipo` ENUM('correctiva', 'deportiva', 'diabetica', 'confort', 'personalizada') DEFAULT 'personalizada',
+  `material` ENUM('poliuretano', 'silicona', 'gel', 'eva', 'corcho', 'combinado') DEFAULT 'eva',
+  `talla` ENUM('22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45') NOT NULL,
+  `pie` ENUM('izquierdo', 'derecho', 'ambos') DEFAULT 'ambos',
+  `diagnostico` TEXT NULL,
+  `caracteristicas` JSON NULL COMMENT 'JSON con características específicas',
+  `fecha_creacion` DATE NOT NULL,
+  `fecha_entrega` DATE NULL,
+  `estado` ENUM('en_diseno', 'en_produccion', 'listo', 'entregado', 'garantia', 'vencido') DEFAULT 'en_diseno',
+  `notas` TEXT NULL,
+  `costo_produccion` DECIMAL(10,2) DEFAULT 0.00,
+  `precio_venta` DECIMAL(10,2) NOT NULL,
+  `garantia_meses` INT DEFAULT 6,
+  `fecha_registro` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (`id_cliente`) REFERENCES `clientes`(`id`) ON DELETE CASCADE,
+  
+  INDEX `idx_codigo` (`codigo`),
+  INDEX `idx_cliente` (`id_cliente`),
+  INDEX `idx_tipo` (`tipo`),
+  INDEX `idx_talla` (`talla`),
+  INDEX `idx_estado` (`estado`),
+  INDEX `idx_fecha_creacion` (`fecha_creacion`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO `plantillas` (`nombre`, `descripcion`, `contenido`, `tipo`) VALUES
-('Confirmación de Cita', 'Plantilla para confirmar citas', 'Estimado/a [CLIENTE],\n\nSu cita ha sido confirmada para el [FECHA] a las [HORA].\n\nServicio: [SERVICIO]\nEmpleado: [EMPLEADO]\n\nPor favor, llegar 10 minutos antes.\n\nSaludos,\nHealthy Feet', 'cita'),
-('Recordatorio de Cita', 'Recordatorio 24h antes', 'Hola [CLIENTE],\n\nLe recordamos su cita mañana [FECHA] a las [HORA].\n\nNo olvide traer [REQUISITOS].\n\nSaludos,\nHealthy Feet', 'recordatorio'),
-('Promoción Mensual', 'Oferta especial del mes', '¡Oferta especial!\n\nEste mes tenemos 20% de descuento en [SERVICIO].\n\nVálido hasta [FECHA_LIMITE].\n\nReserve su cita al [TELEFONO].', 'promocion');
+-- --------------------------------------------------------
+-- Tabla: mediciones_pie
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `mediciones_pie` (
+  `id` INT PRIMARY KEY AUTO_INCREMENT,
+  `id_plantilla` INT NOT NULL,
+  `largo_cm` DECIMAL(5,2) NOT NULL,
+  `ancho_cm` DECIMAL(5,2) NOT NULL,
+  `alto_empeine_cm` DECIMAL(5,2) NULL,
+  `arco_longitudinal` ENUM('bajo', 'normal', 'alto') DEFAULT 'normal',
+  `tipo_pisada` ENUM('pronador', 'supinador', 'neutro') DEFAULT 'neutro',
+  `presion_maxima_zona` VARCHAR(100) NULL,
+  `observaciones` TEXT NULL,
+  `foto_plantilla` VARCHAR(255) NULL,
+  `fecha_medicion` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (`id_plantilla`) REFERENCES `plantillas`(`id`) ON DELETE CASCADE,
+  
+  INDEX `idx_plantilla` (`id_plantilla`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

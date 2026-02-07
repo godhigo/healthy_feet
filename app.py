@@ -557,25 +557,36 @@ def productos():
 @app.route('/plantillas')
 @login_required
 def plantillas():
-    """Gestión de plantillas - Accesible para admin y staff"""
+    """Gestión de plantillas"""
     if current_user.role not in ['admin', 'staff']:
         flash("Acceso restringido", "error")
         return redirect("/")
     
     # Obtener filtros
-    filtro = request.args.get('nombre', '').strip()
+    filtro = request.args.get('codigo', '').strip()
+    estado_filtro = request.args.get('estado', '')
     
     conn = get_connection()
     try:
         with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-            query = "SELECT * FROM plantillas WHERE 1=1"
+            # Consulta principal con JOIN a clientes
+            query = """
+                SELECT p.*, c.nombre as cliente_nombre 
+                FROM plantillas p
+                LEFT JOIN clientes c ON p.id_cliente = c.id
+                WHERE 1=1
+            """
             params = []
             
             if filtro:
-                query += " AND nombre LIKE %s"
+                query += " AND p.codigo LIKE %s"
                 params.append(f"%{filtro}%")
             
-            query += " ORDER BY nombre"
+            if estado_filtro:
+                query += " AND p.estado = %s"
+                params.append(estado_filtro)
+            
+            query += " ORDER BY p.fecha_creacion DESC, p.codigo DESC"
             cursor.execute(query, params)
             plantillas = cursor.fetchall()
     finally:
@@ -584,8 +595,99 @@ def plantillas():
     return render_template(
         "plantillas.html",
         plantillas=plantillas,
-        filtro=filtro
+        filtro=filtro,
+        estado_filtro=estado_filtro,
+        current_user=current_user
     )
+
+@app.route('/agregar_plantilla', methods=['POST'])
+@login_required
+def agregar_plantilla():
+    """Agregar nueva plantilla ortopédica"""
+    if current_user.role not in ['admin', 'staff']:
+        flash("Acceso restringido", "error")
+        return redirect("/")
+    
+    # Generar código único (PLT-YYYY-NNN)
+    from datetime import datetime
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Contar plantillas del año actual
+            cursor.execute(
+                "SELECT COUNT(*) as count FROM plantillas WHERE YEAR(fecha_creacion) = YEAR(CURDATE())"
+            )
+            count = cursor.fetchone()['count']
+            
+            codigo = f"PLT-{datetime.now().year}-{str(count + 1).zfill(3)}"
+            
+            # Insertar plantilla
+            cursor.execute("""
+                INSERT INTO plantillas 
+                (id_cliente, codigo, tipo, material, talla, pie, diagnostico, 
+                 precio_venta, fecha_creacion, estado)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURDATE(), 'en_diseno')
+            """, (
+                request.form.get('id_cliente'),
+                codigo,
+                request.form.get('tipo'),
+                request.form.get('material'),
+                request.form.get('talla'),
+                request.form.get('pie'),
+                request.form.get('diagnostico'),
+                float(request.form.get('precio_venta', 0))
+            ))
+            
+            conn.commit()
+            flash(f"Plantilla {codigo} creada exitosamente", "success")
+    finally:
+        conn.close()
+    
+    return redirect("/plantillas")
+
+@app.route('/api/clientes')
+@login_required
+def api_clientes():
+    """API para obtener clientes (para select)"""
+    conn = get_connection()
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            cursor.execute(
+                "SELECT id, nombre, telefono FROM clientes ORDER BY nombre"
+            )
+            clientes = cursor.fetchall()
+    finally:
+        conn.close()
+    
+    return jsonify(clientes)
+
+@app.route('/api/plantillas/<int:id>/estado', methods=['POST'])
+@login_required
+def api_cambiar_estado_plantilla(id):
+    """API para cambiar estado de plantilla"""
+    if current_user.role not in ['admin', 'staff']:
+        return jsonify({"success": False, "message": "Acceso denegado"})
+    
+    data = request.get_json()
+    nuevo_estado = data.get('estado')
+    
+    if nuevo_estado not in ['en_diseno', 'en_produccion', 'listo', 'entregado']:
+        return jsonify({"success": False, "message": "Estado no válido"})
+    
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                UPDATE plantillas
+                SET estado = %s,
+                    fecha_entrega = CASE WHEN %s = 'entregado' THEN CURDATE() ELSE fecha_entrega END
+                WHERE id = %s
+            """, (nuevo_estado, nuevo_estado, id))
+            conn.commit()
+            
+            return jsonify({"success": True, "message": "Estado actualizado"})
+    finally:
+        conn.close()
 
 # ============================================================================
 # RUTAS DE EMPLEADOS

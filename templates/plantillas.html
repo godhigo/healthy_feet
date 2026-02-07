@@ -7,10 +7,10 @@
     <div class="d-flex justify-between align-center">
         <div>
             <h1 class="content-title">
-                <i class="fas fa-file-alt"></i>
+                <i class="fas fa-shoe-prints"></i>
                 Gestión de Plantillas
             </h1>
-            <p class="content-subtitle">Plantillas para citas y comunicaciones</p>
+            <p class="content-subtitle">Diseño y producción de plantillas personalizadas</p>
         </div>
         
         <div class="d-flex align-center gap-3">
@@ -29,10 +29,20 @@
     <form method="GET" action="{{ url_for('plantillas') }}" class="search-form">
         <div class="form-group" style="flex: 1;">
             <input type="text" 
-                   name="nombre" 
+                   name="codigo" 
                    class="form-control form-control-sm"
-                   placeholder="Buscar plantilla por nombre..." 
+                   placeholder="Buscar por código (PLT-2024-001)..." 
                    value="{{ filtro }}">
+        </div>
+        
+        <div class="form-group">
+            <select name="estado" class="form-control form-control-sm">
+                <option value="">Todos los estados</option>
+                <option value="en_diseno" {% if estado_filtro == 'en_diseno' %}selected{% endif %}>En diseño</option>
+                <option value="en_produccion" {% if estado_filtro == 'en_produccion' %}selected{% endif %}>En producción</option>
+                <option value="listo" {% if estado_filtro == 'listo' %}selected{% endif %}>Listo</option>
+                <option value="entregado" {% if estado_filtro == 'entregado' %}selected{% endif %}>Entregado</option>
+            </select>
         </div>
         
         <button type="submit" class="btn btn-primary btn-sm">
@@ -47,73 +57,239 @@
 <div class="container-card">
     <div class="d-flex justify-between align-center mb-3">
         <h3>
-            <i class="fas fa-file-invoice"></i> 
-            Plantillas Disponibles
+            <i class="fas fa-archive"></i> 
+            Plantillas Registradas
             <span class="badge badge-primary">{{ plantillas|length }}</span>
         </h3>
         
-        {% if current_user.role == 'admin' %}
-        <button class="btn btn-success btn-sm" id="nueva-plantilla">
+        <button class="btn btn-success btn-sm" id="nueva-plantilla" data-bs-toggle="modal" data-bs-target="#modalNuevaPlantilla">
             <i class="fas fa-plus"></i> Nueva Plantilla
         </button>
-        {% endif %}
     </div>
     
     {% if plantillas %}
-    <div class="grid grid-2">
-        {% for plantilla in plantillas %}
-        <div class="card">
-            <div class="d-flex justify-between align-center mb-2">
-                <h4 class="text-primary">{{ plantilla.nombre }}</h4>
-                <span class="badge {% if plantilla.estado == 'activo' %}badge-success{% else %}badge-danger{% endif %}">
-                    {{ plantilla.estado }}
-                </span>
-            </div>
-            
-            {% if plantilla.descripcion %}
-            <p class="text-muted mb-3">{{ plantilla.descripcion }}</p>
-            {% endif %}
-            
-            <div class="bg-light p-3 rounded mb-3" style="max-height: 200px; overflow-y: auto;">
-                <pre class="mb-0" style="white-space: pre-wrap; font-size: 0.875rem;">{{ plantilla.contenido }}</pre>
-            </div>
-            
-            <div class="d-flex justify-between">
-                <button class="btn btn-outline btn-sm usar-plantilla-btn" 
-                        data-id="{{ plantilla.id }}">
-                    <i class="fas fa-copy"></i> Usar Plantilla
-                </button>
-                
-                {% if current_user.role == 'admin' %}
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-outline editar-plantilla-btn" 
-                            data-id="{{ plantilla.id }}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline eliminar-plantilla-btn" 
-                            data-id="{{ plantilla.id }}"
-                            data-nombre="{{ plantilla.nombre }}">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        {% endfor %}
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Talla</th>
+                    <th>Material</th>
+                    <th>Estado</th>
+                    <th>Fecha Creación</th>
+                    <th>Precio</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plantilla in plantillas %}
+                <tr>
+                    <td>
+                        <strong>{{ plantilla.codigo }}</strong>
+                        <br>
+                        <small class="text-muted">{{ plantilla.pie|title }}</small>
+                    </td>
+                    <td>
+                        {% if plantilla.cliente_nombre %}
+                        {{ plantilla.cliente_nombre }}
+                        {% else %}
+                        Cliente #{{ plantilla.id_cliente }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge 
+                            {% if plantilla.tipo == 'diabetica' %}badge-danger
+                            {% elif plantilla.tipo == 'deportiva' %}badge-primary
+                            {% elif plantilla.tipo == 'correctiva' %}badge-warning
+                            {% else %}badge-success{% endif %}">
+                            {{ plantilla.tipo|title }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge badge-secondary">{{ plantilla.talla }}</span>
+                    </td>
+                    <td>{{ plantilla.material|title }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if plantilla.estado == 'entregado' %}badge-success
+                            {% elif plantilla.estado == 'listo' %}badge-info
+                            {% elif plantilla.estado == 'en_produccion' %}badge-warning
+                            {% elif plantilla.estado == 'en_diseno' %}badge-light
+                            {% else %}badge-secondary{% endif %}">
+                            {{ plantilla.estado|replace('_', ' ')|title }}
+                        </span>
+                    </td>
+                    <td>{{ plantilla.fecha_creacion|format_date }}</td>
+                    <td class="text-success font-weight-bold">${{ "%.2f"|format(plantilla.precio_venta) }}</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline ver-plantilla-btn" 
+                                    data-id="{{ plantilla.id }}"
+                                    title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            {% if current_user.role in ['admin', 'staff'] %}
+                            <button class="btn btn-sm btn-outline editar-plantilla-btn" 
+                                    data-id="{{ plantilla.id }}"
+                                    title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline cambiar-estado-btn" 
+                                    data-id="{{ plantilla.id }}"
+                                    data-codigo="{{ plantilla.codigo }}"
+                                    title="Cambiar estado">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
     {% else %}
-    <div class="text-center p-4">
-        <i class="fas fa-file-alt fa-2x text-muted mb-2"></i>
+    <div class="text-center p-5">
+        <i class="fas fa-shoe-prints fa-3x text-muted mb-3"></i>
         <h5 class="text-muted">No hay plantillas registradas</h5>
         <p class="text-muted small">
             {% if filtro %}
-                Intenta con otro término de búsqueda
+                No se encontraron plantillas con ese criterio de búsqueda
             {% else %}
-                Las plantillas aparecerán aquí cuando se agreguen
+                Comienza registrando una nueva plantilla
             {% endif %}
         </p>
     </div>
     {% endif %}
+</div>
+
+<!-- Modal para nueva plantilla -->
+<div class="modal fade" id="modalNuevaPlantilla" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle"></i> Nueva Plantilla
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevaPlantilla" action="{{ url_for('agregar_plantilla') }}" method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Cliente *</label>
+                                <select name="id_cliente" class="form-control" required>
+                                    <option value="">Seleccionar cliente...</option>
+                                    <!-- Esto se llenará con JavaScript -->
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Tipo de Plantilla *</label>
+                                <select name="tipo" class="form-control" required>
+                                    <option value="">Seleccionar tipo...</option>
+                                    <option value="correctiva">Correctiva</option>
+                                    <option value="deportiva">Deportiva</option>
+                                    <option value="diabetica">Diabética</option>
+                                    <option value="confort">Confort</option>
+                                    <option value="personalizada">Personalizada</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Material *</label>
+                                <select name="material" class="form-control" required>
+                                    <option value="">Seleccionar material...</option>
+                                    <option value="poliuretano">Poliuretano</option>
+                                    <option value="silicona">Silicona</option>
+                                    <option value="gel">Gel</option>
+                                    <option value="eva">EVA</option>
+                                    <option value="corcho">Corcho</option>
+                                    <option value="combinado">Combinado</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Talla *</label>
+                                <select name="talla" class="form-control" required>
+                                    <option value="">Seleccionar talla...</option>
+                                    {% for talla in range(22, 46) %}
+                                    <option value="{{ talla }}">{{ talla }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Pie *</label>
+                                <select name="pie" class="form-control" required>
+                                    <option value="">Seleccionar...</option>
+                                    <option value="izquierdo">Izquierdo</option>
+                                    <option value="derecho">Derecho</option>
+                                    <option value="ambos">Ambos</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Precio de Venta *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" name="precio_venta" class="form-control" 
+                                           step="0.01" min="0" required placeholder="Ej: 650.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Diagnóstico / Indicaciones</label>
+                        <textarea name="diagnostico" class="form-control" rows="3" 
+                                  placeholder="Describa el diagnóstico o necesidad del paciente..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Características Especiales</label>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="d-flex align-center gap-2">
+                                    <input type="checkbox" name="caracteristicas[]" value="amortiguacion_alta">
+                                    Amortiguación alta
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="d-flex align-center gap-2">
+                                    <input type="checkbox" name="caracteristicas[]" value="arco_reforzado">
+                                    Arco reforzado
+                                </label>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="d-flex align-center gap-2">
+                                    <input type="checkbox" name="caracteristicas[]" value="anti_hongos">
+                                    Anti-hongos
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Notas Adicionales</label>
+                        <textarea name="notas" class="form-control" rows="2" 
+                                  placeholder="Observaciones o notas especiales..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNuevaPlantilla" class="btn btn-success">
+                    <i class="fas fa-save"></i> Guardar Plantilla
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -126,56 +302,88 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Manejar clic en botón de nueva plantilla (solo admin)
-    const nuevaBtn = document.getElementById('nueva-plantilla');
-    if (nuevaBtn) {
-        nuevaBtn.addEventListener('click', function() {
-            alert('Función para agregar nueva plantilla (solo admin)');
-            // Aquí iría la lógica para mostrar formulario
-        });
+    // Cargar clientes en el select del modal
+    const clienteSelect = document.querySelector('select[name="id_cliente"]');
+    if (clienteSelect) {
+        fetch('/api/clientes')
+            .then(response => response.json())
+            .then(data => {
+                clienteSelect.innerHTML = '<option value="">Seleccionar cliente...</option>' +
+                    data.map(cliente => 
+                        `<option value="${cliente.id}">${cliente.nombre} - ${cliente.telefono}</option>`
+                    ).join('');
+            });
     }
     
-    // Manejar clic en botón de usar plantilla
-    document.querySelectorAll('.usar-plantilla-btn').forEach(btn => {
+    // Manejar clic en botón de ver detalles
+    document.querySelectorAll('.ver-plantilla-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const plantillaId = this.getAttribute('data-id');
-            usarPlantilla(plantillaId);
+            window.location.href = `/plantillas/detalle/${plantillaId}`;
         });
     });
     
-    // Manejar clic en botón de editar plantilla (solo admin)
+    // Manejar clic en botón de editar
     document.querySelectorAll('.editar-plantilla-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const plantillaId = this.getAttribute('data-id');
-            editarPlantilla(plantillaId);
+            window.location.href = `/plantillas/editar/${plantillaId}`;
         });
     });
     
-    // Manejar clic en botón de eliminar plantilla (solo admin)
-    document.querySelectorAll('.eliminar-plantilla-btn').forEach(btn => {
+    // Manejar clic en botón de cambiar estado
+    document.querySelectorAll('.cambiar-estado-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const plantillaId = this.getAttribute('data-id');
-            const nombre = this.getAttribute('data-nombre');
-            eliminarPlantilla(plantillaId, nombre);
+            const codigo = this.getAttribute('data-codigo');
+            cambiarEstadoPlantilla(plantillaId, codigo);
         });
     });
 });
 
-function usarPlantilla(id) {
-    alert('Usar plantilla ' + id);
-    // Aquí iría la lógica para usar la plantilla
-    // Podría abrir un modal con el contenido para copiar
-}
-
-function editarPlantilla(id) {
-    alert('Editar plantilla ' + id + ' (solo admin)');
-    // Aquí iría la lógica para editar
-}
-
-function eliminarPlantilla(id, nombre) {
-    if (confirm('¿Estás seguro de eliminar la plantilla "' + nombre + '"?')) {
-        alert('Eliminar plantilla ' + id + ' (solo admin)');
-        // Aquí iría la lógica para eliminar
+function cambiarEstadoPlantilla(id, codigo) {
+    const estadoActual = prompt(
+        `Cambiar estado para plantilla ${codigo}:\n\n` +
+        `1. En diseño\n` +
+        `2. En producción\n` +
+        `3. Listo\n` +
+        `4. Entregado\n\n` +
+        `Ingrese el nuevo estado (1-4):`
+    );
+    
+    if (estadoActual) {
+        const estados = {
+            '1': 'en_diseno',
+            '2': 'en_produccion',
+            '3': 'listo',
+            '4': 'entregado'
+        };
+        
+        const nuevoEstado = estados[estadoActual];
+        if (nuevoEstado) {
+            fetch(`/api/plantillas/${id}/estado`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ estado: nuevoEstado })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Estado actualizado correctamente');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar el estado');
+            });
+        } else {
+            alert('Estado no válido');
+        }
     }
 }
 </script>
