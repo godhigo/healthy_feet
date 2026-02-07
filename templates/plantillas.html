@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Plantillas - Healthy Feet{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-between align-center">
+        <div>
+            <h1 class="content-title">
+                <i class="fas fa-file-alt"></i>
+                Gestión de Plantillas
+            </h1>
+            <p class="content-subtitle">Plantillas para citas y comunicaciones</p>
+        </div>
+        
+        <div class="d-flex align-center gap-3">
+            <div class="user-info">
+                <span class="text-primary">{{ current_user.nombre }}</span>
+                <span class="text-muted">• {{ current_user.email }}</span>
+            </div>
+            <button class="btn btn-outline btn-sm" id="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="search-box">
+    <form method="GET" action="{{ url_for('plantillas') }}" class="search-form">
+        <div class="form-group" style="flex: 1;">
+            <input type="text" 
+                   name="nombre" 
+                   class="form-control form-control-sm"
+                   placeholder="Buscar plantilla por nombre..." 
+                   value="{{ filtro }}">
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-sm">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+        <button type="button" class="btn btn-outline btn-sm clear-btn">
+            <i class="fas fa-sync"></i> Limpiar
+        </button>
+    </form>
+</div>
+
+<div class="container-card">
+    <div class="d-flex justify-between align-center mb-3">
+        <h3>
+            <i class="fas fa-file-invoice"></i> 
+            Plantillas Disponibles
+            <span class="badge badge-primary">{{ plantillas|length }}</span>
+        </h3>
+        
+        {% if current_user.role == 'admin' %}
+        <button class="btn btn-success btn-sm" id="nueva-plantilla">
+            <i class="fas fa-plus"></i> Nueva Plantilla
+        </button>
+        {% endif %}
+    </div>
+    
+    {% if plantillas %}
+    <div class="grid grid-2">
+        {% for plantilla in plantillas %}
+        <div class="card">
+            <div class="d-flex justify-between align-center mb-2">
+                <h4 class="text-primary">{{ plantilla.nombre }}</h4>
+                <span class="badge {% if plantilla.estado == 'activo' %}badge-success{% else %}badge-danger{% endif %}">
+                    {{ plantilla.estado }}
+                </span>
+            </div>
+            
+            {% if plantilla.descripcion %}
+            <p class="text-muted mb-3">{{ plantilla.descripcion }}</p>
+            {% endif %}
+            
+            <div class="bg-light p-3 rounded mb-3" style="max-height: 200px; overflow-y: auto;">
+                <pre class="mb-0" style="white-space: pre-wrap; font-size: 0.875rem;">{{ plantilla.contenido }}</pre>
+            </div>
+            
+            <div class="d-flex justify-between">
+                <button class="btn btn-outline btn-sm usar-plantilla-btn" 
+                        data-id="{{ plantilla.id }}">
+                    <i class="fas fa-copy"></i> Usar Plantilla
+                </button>
+                
+                {% if current_user.role == 'admin' %}
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline editar-plantilla-btn" 
+                            data-id="{{ plantilla.id }}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline eliminar-plantilla-btn" 
+                            data-id="{{ plantilla.id }}"
+                            data-nombre="{{ plantilla.nombre }}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center p-4">
+        <i class="fas fa-file-alt fa-2x text-muted mb-2"></i>
+        <h5 class="text-muted">No hay plantillas registradas</h5>
+        <p class="text-muted small">
+            {% if filtro %}
+                Intenta con otro término de búsqueda
+            {% else %}
+                Las plantillas aparecerán aquí cuando se agreguen
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar clic en botón de limpiar
+    const clearBtn = document.querySelector('.clear-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            window.location.href = '{{ url_for("plantillas") }}';
+        });
+    }
+    
+    // Manejar clic en botón de nueva plantilla (solo admin)
+    const nuevaBtn = document.getElementById('nueva-plantilla');
+    if (nuevaBtn) {
+        nuevaBtn.addEventListener('click', function() {
+            alert('Función para agregar nueva plantilla (solo admin)');
+            // Aquí iría la lógica para mostrar formulario
+        });
+    }
+    
+    // Manejar clic en botón de usar plantilla
+    document.querySelectorAll('.usar-plantilla-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const plantillaId = this.getAttribute('data-id');
+            usarPlantilla(plantillaId);
+        });
+    });
+    
+    // Manejar clic en botón de editar plantilla (solo admin)
+    document.querySelectorAll('.editar-plantilla-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const plantillaId = this.getAttribute('data-id');
+            editarPlantilla(plantillaId);
+        });
+    });
+    
+    // Manejar clic en botón de eliminar plantilla (solo admin)
+    document.querySelectorAll('.eliminar-plantilla-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const plantillaId = this.getAttribute('data-id');
+            const nombre = this.getAttribute('data-nombre');
+            eliminarPlantilla(plantillaId, nombre);
+        });
+    });
+});
+
+function usarPlantilla(id) {
+    alert('Usar plantilla ' + id);
+    // Aquí iría la lógica para usar la plantilla
+    // Podría abrir un modal con el contenido para copiar
+}
+
+function editarPlantilla(id) {
+    alert('Editar plantilla ' + id + ' (solo admin)');
+    // Aquí iría la lógica para editar
+}
+
+function eliminarPlantilla(id, nombre) {
+    if (confirm('¿Estás seguro de eliminar la plantilla "' + nombre + '"?')) {
+        alert('Eliminar plantilla ' + id + ' (solo admin)');
+        // Aquí iría la lógica para eliminar
+    }
+}
+</script>
+{% endblock %}

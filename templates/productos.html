@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Productos - Healthy Feet{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-between align-center">
+        <div>
+            <h1 class="content-title">
+                <i class="fas fa-box"></i>
+                Gestión de Productos
+            </h1>
+            <p class="content-subtitle">Inventario de productos</p>
+        </div>
+        
+        <div class="d-flex align-center gap-3">
+            <div class="user-info">
+                <span class="text-primary">{{ current_user.nombre }}</span>
+                <span class="text-muted">• {{ current_user.email }}</span>
+            </div>
+            <button class="btn btn-outline btn-sm" id="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="search-box">
+    <form method="GET" action="{{ url_for('productos') }}" class="search-form">
+        <div class="form-group" style="flex: 1;">
+            <input type="text" 
+                   name="nombre" 
+                   class="form-control form-control-sm"
+                   placeholder="Buscar producto por nombre..." 
+                   value="{{ filtro }}">
+        </div>
+        
+        <div class="form-group" style="width: 200px;">
+            <select name="categoria" class="form-control form-control-sm">
+                <option value="">Todas las categorías</option>
+                {% for cat in categorias %}
+                    <option value="{{ cat.categoria }}" 
+                        {% if cat.categoria == categoria_seleccionada %}selected{% endif %}>
+                        {{ cat.categoria }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-sm">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+        <button type="button" class="btn btn-outline btn-sm clear-btn">
+            <i class="fas fa-sync"></i> Limpiar
+        </button>
+    </form>
+</div>
+
+<div class="container-card">
+    <div class="d-flex justify-between align-center mb-3">
+        <h3>
+            <i class="fas fa-boxes"></i> 
+            Inventario de Productos
+            <span class="badge badge-primary">{{ productos|length }}</span>
+        </h3>
+        
+        {% if current_user.role == 'admin' %}
+        <button class="btn btn-success btn-sm" id="nuevo-producto">
+            <i class="fas fa-plus"></i> Nuevo Producto
+        </button>
+        {% endif %}
+    </div>
+    
+    {% if productos %}
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Precio Compra</th>
+                    <th>Precio Venta</th>
+                    <th>Stock</th>
+                    <th>Estado</th>
+                    {% if current_user.role == 'admin' %}
+                    <th>Acciones</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                <tr>
+                    <td>
+                        <strong>{{ producto.nombre }}</strong>
+                        {% if producto.descripcion %}
+                        <br><small class="text-muted">{{ producto.descripcion[:50] }}{% if producto.descripcion|length > 50 %}...{% endif %}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if producto.categoria %}
+                        <span class="badge badge-primary">{{ producto.categoria }}</span>
+                        {% else %}
+                        <span class="text-muted">Sin categoría</span>
+                        {% endif %}
+                    </td>
+                    <td>${{ "%.2f"|format(producto.precio_compra) }}</td>
+                    <td>
+                        <span class="badge badge-success">${{ "%.2f"|format(producto.precio_venta) }}</span>
+                    </td>
+                    <td>
+                        {% if producto.stock <= producto.stock_minimo %}
+                            <span class="badge badge-danger">{{ producto.stock }}</span>
+                            <small class="text-danger d-block">¡Stock bajo!</small>
+                        {% else %}
+                            <span class="badge badge-success">{{ producto.stock }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if producto.estado == 'activo' %}
+                            <span class="badge badge-success">Activo</span>
+                        {% else %}
+                            <span class="badge badge-danger">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    
+                    {% if current_user.role == 'admin' %}
+                    <td>
+                        <button class="btn btn-sm btn-outline edit-producto-btn" data-id="{{ producto.id }}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center p-4">
+        <i class="fas fa-box-open fa-2x text-muted mb-2"></i>
+        <h5 class="text-muted">No hay productos registrados</h5>
+        <p class="text-muted small">
+            {% if filtro or categoria_seleccionada %}
+                Intenta con otros filtros de búsqueda
+            {% else %}
+                Los productos aparecerán aquí cuando se agreguen
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar clic en botón de limpiar
+    const clearBtn = document.querySelector('.clear-btn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            window.location.href = '{{ url_for("productos") }}';
+        });
+    }
+    
+    // Manejar clic en nuevo producto (solo admin)
+    const nuevoBtn = document.getElementById('nuevo-producto');
+    if (nuevoBtn) {
+        nuevoBtn.addEventListener('click', function() {
+            alert('Función para agregar nuevo producto (solo admin)');
+            // Aquí iría la lógica para mostrar formulario
+        });
+    }
+    
+    // Manejar clic en botones de editar
+    document.querySelectorAll('.edit-producto-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const productoId = this.getAttribute('data-id');
+            editarProducto(productoId);
+        });
+    });
+});
+
+function editarProducto(id) {
+    alert('Editar producto ' + id + ' (solo admin)');
+    // Aquí iría la lógica para editar
+}
+</script>
+{% endblock %}

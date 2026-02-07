@@ -2,7 +2,7 @@
 -- Base de datos: healthy feet
 -- --------------------------------------------------------
 
-CREATE DATABASE IF NOT EXISTS `healthy feet` 
+CREATE DATABASE IF NOT EXISTS `healthy feet`
 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 USE `healthy feet`;
@@ -15,7 +15,7 @@ CREATE TABLE `usuarios` (
   `nombre` VARCHAR(100) NOT NULL,
   `email` VARCHAR(100) NOT NULL UNIQUE,
   `password_hash` VARCHAR(255) NOT NULL,
-  `role` ENUM('admin', 'user') DEFAULT 'user',
+  `role` ENUM('admin', 'user', 'staff') DEFAULT 'user',
   `fecha_creacion` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `ultimo_login` TIMESTAMP NULL,
   INDEX `idx_email` (`email`)
@@ -137,7 +137,7 @@ CREATE TABLE `ventas` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
--- Tabla: productos (opcional - para inventario)
+-- Tabla: productos
 -- --------------------------------------------------------
 CREATE TABLE `productos` (
   `id` INT PRIMARY KEY AUTO_INCREMENT,
@@ -157,18 +157,29 @@ CREATE TABLE `productos` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
--- INSERCIÓN DE DATOS INICIALES
+-- USUARIOS INICIALES
 -- --------------------------------------------------------
 
--- Insertar usuario administrador por defecto (contraseña: admin123)
-INSERT INTO `usuarios` (`nombre`, `email`, `password_hash`, `role`) 
-VALUES ('Administrador', 'admin@healthyfeet.com', 'pbkdf2:sha256:600000$Qvs3IZHv1q9zmayI$f4aa27db925e4b8b6e5b05c2579524a5e4519698a83298ef00927f323010a21b', 'admin');
+INSERT INTO `usuarios` (`nombre`, `email`, `password_hash`, `role`)
+VALUES (
+  'Administrador',
+  'admin@healthyfeet.com',
+  'pbkdf2:sha256:600000$Qvs3IZHv1q9zmayI$f4aa27db925e4b8b6e5b05c2579524a5e4519698a83298ef00927f323010a21b',
+  'admin'
+);
+
+INSERT INTO `usuarios` (`nombre`, `email`, `password_hash`, `role`)
+VALUES (
+  'Staff Member',
+  'staff@healthyfeet.com',
+  'pbkdf2:sha256:600000$Qvs3IZHv1q9zmayI$f4aa27db925e4b8b6e5b05c2579524a5e4519698a83298ef00927f323010a21b',
+  'staff'
+);
 
 -- --------------------------------------------------------
--- VISTAS ÚTILES
+-- VISTAS
 -- --------------------------------------------------------
 
--- Vista para ver citas del día con detalles
 CREATE OR REPLACE VIEW vista_citas_hoy AS
 SELECT 
     c.id,
@@ -187,7 +198,6 @@ JOIN servicios s ON c.id_servicio = s.id
 WHERE c.fecha = CURDATE()
 ORDER BY c.hora ASC;
 
--- Vista para reporte de ventas mensuales
 CREATE OR REPLACE VIEW vista_ventas_mensuales AS
 SELECT 
     YEAR(fecha) AS ano,
@@ -199,7 +209,6 @@ FROM ventas
 GROUP BY YEAR(fecha), MONTH(fecha)
 ORDER BY ano DESC, mes DESC;
 
--- Vista para top clientes
 CREATE OR REPLACE VIEW vista_top_clientes AS
 SELECT 
     cl.id,
@@ -214,9 +223,30 @@ GROUP BY cl.id
 ORDER BY total_gastado DESC;
 
 -- --------------------------------------------------------
--- ÍNDICES ADICIONALES PARA OPTIMIZACIÓN
+-- ÍNDICES EXTRA
 -- --------------------------------------------------------
 
 CREATE INDEX idx_ventas_fecha_cliente ON ventas(fecha, id_cliente);
 CREATE INDEX idx_citas_fecha_hora ON citas(fecha, hora);
 CREATE INDEX idx_clientes_nombre_telefono ON clientes(nombre, telefono);
+
+-- --------------------------------------------------------
+-- Tabla: plantillas
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `plantillas` (
+  `id` INT PRIMARY KEY AUTO_INCREMENT,
+  `nombre` VARCHAR(100) NOT NULL,
+  `descripcion` TEXT NULL,
+  `contenido` TEXT NOT NULL,
+  `tipo` ENUM('cita', 'recordatorio', 'promocion', 'general') DEFAULT 'general',
+  `estado` ENUM('activo', 'inactivo') DEFAULT 'activo',
+  `fecha_creacion` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_nombre` (`nombre`),
+  INDEX `idx_tipo` (`tipo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `plantillas` (`nombre`, `descripcion`, `contenido`, `tipo`) VALUES
+('Confirmación de Cita', 'Plantilla para confirmar citas', 'Estimado/a [CLIENTE],\n\nSu cita ha sido confirmada para el [FECHA] a las [HORA].\n\nServicio: [SERVICIO]\nEmpleado: [EMPLEADO]\n\nPor favor, llegar 10 minutos antes.\n\nSaludos,\nHealthy Feet', 'cita'),
+('Recordatorio de Cita', 'Recordatorio 24h antes', 'Hola [CLIENTE],\n\nLe recordamos su cita mañana [FECHA] a las [HORA].\n\nNo olvide traer [REQUISITOS].\n\nSaludos,\nHealthy Feet', 'recordatorio'),
+('Promoción Mensual', 'Oferta especial del mes', '¡Oferta especial!\n\nEste mes tenemos 20% de descuento en [SERVICIO].\n\nVálido hasta [FECHA_LIMITE].\n\nReserve su cita al [TELEFONO].', 'promocion');

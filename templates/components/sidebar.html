@@ -3,13 +3,23 @@
         <img src="{{ url_for('static', filename='images/logo.png') }}" 
              alt="Healthy Feet Logo" 
              class="sidebar-avatar"
-             onerror="this.src='https://via.placeholder.com/120/4361ee/ffffff?text=HF'">
+             onerror="this.src='https://via.placeholder.com/80/4361ee/ffffff?text=HF'">
         <h2 class="sidebar-title">Healthy Feet</h2>
-        <p class="sidebar-subtitle">Sistema de Gestión</p>
+        <p class="sidebar-subtitle">
+            {% if current_user.role == 'admin' %}
+                Administrador
+            {% elif current_user.role == 'staff' %}
+                Personal
+            {% else %}
+                Usuario
+            {% endif %}
+        </p>
     </div>
 
     <nav class="sidebar-nav">
-
+        <!-- Sección PRINCIPAL -->
+        <div class="sidebar-section">Principal</div>
+        
         <a href="{{ url_for('index') }}" class="sidebar-link {% if request.path == '/' %}active{% endif %}">
             <i class="fas fa-home sidebar-icon"></i>
             <span>Dashboard</span>
@@ -25,6 +35,29 @@
             <span>Clientes</span>
         </a>
         
+        <!-- Sección OPERACIONES (para staff y admin) -->
+        {% if current_user.role in ['admin', 'staff'] %}
+        <div class="sidebar-divider"></div>
+        
+        <div class="sidebar-section">Operaciones</div>
+        
+        <a href="{{ url_for('productos') }}" class="sidebar-link {% if request.path.startswith('/productos') %}active{% endif %}">
+            <i class="fas fa-box sidebar-icon"></i>
+            <span>Productos</span>
+        </a>
+        
+        <a href="{{ url_for('plantillas') }}" class="sidebar-link {% if request.path.startswith('/plantillas') %}active{% endif %}">
+            <i class="fas fa-file-alt sidebar-icon"></i>
+            <span>Plantillas</span>
+        </a>
+        {% endif %}
+        
+        <!-- Sección ADMINISTRACIÓN (solo para admin) -->
+        {% if current_user.role == 'admin' %}
+        <div class="sidebar-divider"></div>
+        
+        <div class="sidebar-section">Administración</div>
+        
         <a href="{{ url_for('empleados') }}" class="sidebar-link {% if request.path.startswith('/empleados') %}active{% endif %}">
             <i class="fas fa-user-md sidebar-icon"></i>
             <span>Empleados</span>
@@ -34,9 +67,21 @@
             <i class="fas fa-chart-line sidebar-icon"></i>
             <span>Ventas</span>
         </a>
+        
+        {% if current_user.email == "admin@healthyfeet.com" %}
+        <a href="{{ url_for('admin_panel') }}" class="sidebar-link {% if request.path.startswith('/admin') %}active{% endif %}">
+            <i class="fas fa-cog sidebar-icon"></i>
+            <span>Super Admin</span>
+        </a>
+        {% endif %}
+        {% endif %}
     </nav>
 
     <div class="sidebar-footer">
+        <div class="user-info-small">
+            <strong>{{ current_user.nombre }}</strong><br>
+            <small>{{ current_user.email }}</small>
+        </div>
         <a href="{{ url_for('logout') }}" class="btn btn-danger btn-full">
             <i class="fas fa-sign-out-alt"></i>
             <span>Cerrar Sesión</span>

@@ -17,53 +17,79 @@
     </div>
 
     <!-- Tarjetas de estadísticas más compactas -->
-    <div class="dashboard-stats-compact">
-        <div class="row">
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card-compact">
-                    <div class="stat-icon-compact">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="stat-value-compact">{{ citas_dia }}</div>
-                    <div class="stat-label-compact">Citas Hoy</div>
-                    <a href="{{ url_for('citas') }}" class="stat-link">Ver Citas</a>
+<div class="dashboard-stats-compact">
+    <div class="row">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card-compact">
+                <div class="stat-icon-compact">
+                    <i class="fas fa-calendar-check"></i>
                 </div>
-            </div>
-            
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card-compact">
-                    <div class="stat-icon-compact">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-value-compact">{{ clientes }}</div>
-                    <div class="stat-label-compact">Clientes</div>
-                    <a href="{{ url_for('clientes') }}" class="stat-link">Ver Clientes</a>
-                </div>
-            </div>
-            
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card-compact">
-                    <div class="stat-icon-compact">
-                        <i class="fas fa-user-md"></i>
-                    </div>
-                    <div class="stat-value-compact">{{ empleados }}</div>
-                    <div class="stat-label-compact">Empleados</div>
-                    <a href="{{ url_for('empleados') }}" class="stat-link">Ver Empleados</a>
-                </div>
-            </div>
-            
-            <div class="col-md-3 col-sm-6">
-                <div class="stat-card-compact">
-                    <div class="stat-icon-compact">
-                        <i class="fas fa-dollar-sign"></i>
-                    </div>
-                    <div class="stat-value-compact">${{ "%.2f"|format(ventas_semana) }}</div>
-                    <div class="stat-label-compact">Ventas Semana</div>
-                    <a href="{{ url_for('ventas') }}" class="stat-link">Ver Ventas</a>
-                </div>
+                <div class="stat-value-compact">{{ citas_dia }}</div>
+                <div class="stat-label-compact">Citas Hoy</div>
+                <a href="{{ url_for('citas') }}" class="stat-link">Ver Citas</a>
             </div>
         </div>
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card-compact">
+                <div class="stat-icon-compact">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value-compact">{{ clientes }}</div>
+                <div class="stat-label-compact">Clientes</div>
+                <a href="{{ url_for('clientes') }}" class="stat-link">Ver Clientes</a>
+            </div>
+        </div>
+        
+        {% if current_user.role == 'admin' %}
+        <!-- Estadísticas solo para admin -->
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card-compact">
+                <div class="stat-icon-compact">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <div class="stat-value-compact">{{ empleados }}</div>
+                <div class="stat-label-compact">Empleados</div>
+                <a href="{{ url_for('empleados') }}" class="stat-link">Ver Empleados</a>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card-compact">
+                <div class="stat-icon-compact">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stat-value-compact">${{ "%.2f"|format(ventas_semana) }}</div>
+                <div class="stat-label-compact">Ventas Semana</div>
+                <a href="{{ url_for('ventas') }}" class="stat-link">Ver Ventas</a>
+            </div>
+        </div>
+        {% else %}
+        <!-- Estadísticas para staff -->
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card-compact">
+                <div class="stat-icon-compact">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="stat-value-compact">{{ productos }}</div>
+                <div class="stat-label-compact">Productos</div>
+                <a href="{{ url_for('productos') }}" class="stat-link">Ver Productos</a>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card-compact">
+                <div class="stat-icon-compact">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-value-compact">{{ plantillas }}</div>
+                <div class="stat-label-compact">Plantillas</div>
+                <a href="{{ url_for('plantillas') }}" class="stat-link">Ver Plantillas</a>
+            </div>
+        </div>
+        {% endif %}
     </div>
+</div>
 
     <!-- Gráficos ajustados -->
     <div class="dashboard-charts-compact">

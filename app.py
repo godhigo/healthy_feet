@@ -311,6 +311,27 @@ def load_user(user_id: str) -> Optional[Usuario]:
 # ============================================================================
 # DECORADORES PERSONALIZADOS
 # ============================================================================
+def staff_required(f):
+    """Decorador para requerir rol de staff o admin"""
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or getattr(current_user, 'role', 'user') not in ['admin', 'staff']:
+            flash("Acceso restringido", "error")
+            return redirect("/")
+        return f(*args, **kwargs)
+    return decorated_function
+
+def only_staff_required(f):
+    """Decorador solo para staff (no admin)"""
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or getattr(current_user, 'role', 'user') != 'staff':
+            flash("Acceso restringido al personal", "error")
+            return redirect("/")
+        return f(*args, **kwargs)
+    return decorated_function
 
 def admin_required(f):
     """Decorador para requerir rol de administrador"""
@@ -396,25 +417,46 @@ def index():
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
-            # Citas del día
+            # Citas del día (ambos roles)
             cursor.execute("SELECT COUNT(*) as count FROM citas WHERE fecha = CURDATE() AND estado != 'cancelada'")
             citas_dia = cursor.fetchone()['count']
             
-            # Total clientes
+            # Total clientes (ambos roles)
             cursor.execute("SELECT COUNT(*) as count FROM clientes")
             clientes = cursor.fetchone()['count']
             
-            # Empleados activos
-            cursor.execute("SELECT COUNT(*) as count FROM empleados WHERE estado = 'activo'")
-            empleados = cursor.fetchone()['count']
-            
-            # Ventas de la semana
-            cursor.execute("""
-                SELECT IFNULL(SUM(total), 0) as total
-                FROM ventas
-                WHERE YEARWEEK(fecha, 1) = YEARWEEK(CURDATE(), 1)
-            """)
-            ventas_semana = cursor.fetchone()['total']
+            # Datos específicos según rol
+            if current_user.role == 'admin':
+                # Empleados activos (solo admin)
+                cursor.execute("SELECT COUNT(*) as count FROM empleados WHERE estado = 'activo'")
+                empleados = cursor.fetchone()['count']
+                
+                # Ventas de la semana (solo admin)
+                cursor.execute("""
+                    SELECT IFNULL(SUM(total), 0) as total
+                    FROM ventas
+                    WHERE YEARWEEK(fecha, 1) = YEARWEEK(CURDATE(), 1)
+                """)
+                ventas_semana = cursor.fetchone()['total']
+                
+                # Productos (solo admin)
+                cursor.execute("SELECT COUNT(*) as count FROM productos")
+                productos = cursor.fetchone()['count']
+                
+                # Plantillas (solo admin)
+                cursor.execute("SELECT COUNT(*) as count FROM plantillas")
+                plantillas = cursor.fetchone()['count']
+                
+            else:  # staff o user
+                # Para staff, mostrar otros datos
+                cursor.execute("SELECT COUNT(*) as count FROM productos WHERE estado = 'activo'")
+                productos = cursor.fetchone()['count']
+                
+                cursor.execute("SELECT COUNT(*) as count FROM plantillas WHERE estado = 'activo'")
+                plantillas = cursor.fetchone()['count']
+                
+                empleados = 0
+                ventas_semana = 0
     finally:
         conn.close()
     
@@ -424,6 +466,8 @@ def index():
         clientes=clientes,
         empleados=empleados,
         ventas_semana=ventas_semana,
+        productos=productos,
+        plantillas=plantillas,
         current_user=current_user
     )
 
@@ -463,11 +507,92 @@ def dashboard_data():
     })
 
 # ============================================================================
+# RUTAS PARA STAFF
+# ============================================================================
+
+@app.route('/productos')
+@login_required
+def productos():
+    """Gestión de productos - Accesible para admin y staff"""
+    if current_user.role not in ['admin', 'staff']:
+        flash("Acceso restringido", "error")
+        return redirect("/")
+    
+    # Obtener filtros
+    filtro = request.args.get('nombre', '').strip()
+    categoria = request.args.get('categoria', '')
+    
+    conn = get_connection()
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            query = "SELECT * FROM productos WHERE 1=1"
+            params = []
+            
+            if filtro:
+                query += " AND nombre LIKE %s"
+                params.append(f"%{filtro}%")
+            
+            if categoria:
+                query += " AND categoria = %s"
+                params.append(categoria)
+            
+            query += " ORDER BY nombre"
+            cursor.execute(query, params)
+            productos = cursor.fetchall()
+            
+            # Obtener categorías únicas para el filtro
+            cursor.execute("SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL ORDER BY categoria")
+            categorias = cursor.fetchall()
+    finally:
+        conn.close()
+    
+    return render_template(
+        "productos.html",
+        productos=productos,
+        filtro=filtro,
+        categorias=categorias,
+        categoria_seleccionada=categoria
+    )
+
+@app.route('/plantillas')
+@login_required
+def plantillas():
+    """Gestión de plantillas - Accesible para admin y staff"""
+    if current_user.role not in ['admin', 'staff']:
+        flash("Acceso restringido", "error")
+        return redirect("/")
+    
+    # Obtener filtros
+    filtro = request.args.get('nombre', '').strip()
+    
+    conn = get_connection()
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            query = "SELECT * FROM plantillas WHERE 1=1"
+            params = []
+            
+            if filtro:
+                query += " AND nombre LIKE %s"
+                params.append(f"%{filtro}%")
+            
+            query += " ORDER BY nombre"
+            cursor.execute(query, params)
+            plantillas = cursor.fetchall()
+    finally:
+        conn.close()
+    
+    return render_template(
+        "plantillas.html",
+        plantillas=plantillas,
+        filtro=filtro
+    )
+
+# ============================================================================
 # RUTAS DE EMPLEADOS
 # ============================================================================
 
 @app.route('/empleados')
-@login_required
+@admin_required
 def empleados():
     """Lista de empleados"""
     conn = get_connection()
@@ -485,7 +610,7 @@ def empleados():
     return render_template("empleados.html", empleados=empleados)
 
 @app.route('/actualizar_empleado', methods=['POST'])
-@login_required
+@admin_required
 @handle_db_errors
 def actualizar_empleado():
     """Actualizar información de empleado"""
@@ -1163,7 +1288,7 @@ def cancelar_cita():
 # ============================================================================
 
 @app.route('/ventas', methods=['GET', 'POST'])
-@login_required
+@admin_required
 def ventas():
     """Gestión de ventas con filtros"""
     filtro = request.form.get('filtro', 'dia') or request.args.get('filtro', 'dia')
