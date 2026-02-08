@@ -1,4 +1,4 @@
-<aside class="sidebar">
+<aside class="sidebar {% if current_user.role == 'staff' %}sidebar-staff{% endif %}">
     <div class="sidebar-profile">
         <img src="{{ url_for('static', filename='images/logo.png') }}" 
              alt="Healthy Feet Logo" 

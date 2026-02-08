@@ -449,10 +449,10 @@ body {
 }
 
 /* ============================================================================
-   LAYOUT PRINCIPAL - SIDEBAR ACTUALIZADO
+   LAYOUT PRINCIPAL - SIDEBAR
 ============================================================================ */
 
-/* Sidebar */
+/* Sidebar GENERAL (para admin y staff por defecto) */
 .sidebar {
     position: fixed;
     left: 0;
@@ -507,13 +507,24 @@ body {
     display: flex;
     flex-direction: column;
     padding: 0;
+    flex: 1;
+    overflow-y: auto;
 }
 
-/* Pie fijo */
-.sidebar-footer {
-    padding: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    flex-shrink: 0;
+/* Secciones y divisores */
+.sidebar-section {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 24px;
+    margin: 0.5px 0 4px;
+}
+
+.sidebar-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 1px 20px;
 }
 
 /* Enlaces */
@@ -559,20 +570,12 @@ body {
     width: 100%;
 }
 
-/* Secciones y divisores */
-.sidebar-section {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 8px 24px;
-    margin: 0.5px 0 4px;
-}
-
-.sidebar-divider {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 1px 20px;
+/* Footer del sidebar - ESTILO ORIGINAL (para admin) */
+.sidebar-footer {
+    padding: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 /* Información de usuario en footer */
@@ -598,6 +601,61 @@ body {
 .sidebar-footer .btn {
     padding: 10px;
     font-size: 13px;
+}
+
+/* ============================================================================
+   SIDEBAR ESPECÍFICO PARA STAFF (footer empujado hacia abajo)
+============================================================================ */
+
+/* Solo para staff: footer fijo en la parte inferior */
+.sidebar-staff {
+    display: flex;
+    flex-direction: column;
+}
+
+/* La navegación ocupa el espacio restante */
+.sidebar-staff .sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Footer empujado hacia abajo para staff */
+.sidebar-staff .sidebar-footer {
+    margin-top: auto;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Información de usuario en footer para staff */
+.sidebar-staff .user-info-small {
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    border-radius: var(--border-radius);
+}
+
+.sidebar-staff .user-info-small strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.sidebar-staff .user-info-small small {
+    display: block;
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+/* Botón de logout para staff */
+.sidebar-staff .sidebar-footer .btn {
+    width: 100%;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.sidebar-staff .sidebar-footer .btn:hover {
+    transform: translateY(-1px);
 }
 
 /* Main Content */
@@ -1440,6 +1498,11 @@ body {
         grid-template-columns: 1fr;
     }
     
+    /* Ajustes para sidebar-staff en móvil */
+    .sidebar-staff .sidebar-nav {
+        padding-bottom: 80px; /* Espacio para el footer en móvil */
+    }
+    
     /* Botón para mostrar sidebar en móvil */
     .sidebar-toggle {
         position: fixed;
@@ -1597,4 +1660,22 @@ body.zoomed {
 .sidebar-toggle,
 .sidebar {
     transform-origin: top left;
+}
+
+/* Estilos para la barra de scroll en sidebar */
+.sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
 }
