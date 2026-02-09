@@ -1679,3 +1679,140 @@ body.zoomed {
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.5);
 }
+
+/* ============================================================================
+   ESTILOS PARA MÓDULO DE PRODUCTOS
+============================================================================ */
+
+/* Estilos para productos con stock bajo */
+.producto-stock-bajo {
+    background-color: rgba(220, 53, 69, 0.05) !important;
+    border-left: 3px solid #dc3545;
+    animation: pulse 3s infinite;
+}
+
+/* Botón de eliminar con outline rojo */
+.btn-outline-danger {
+    border-color: #dc3545;
+    color: #dc3545;
+    background: transparent;
+}
+
+.btn-outline-danger:hover {
+    background-color: #dc3545;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+}
+
+/* Alineación vertical para celdas de tabla */
+.table td {
+    vertical-align: middle;
+}
+
+/* Mejoras para formularios de productos */
+.form-container {
+    max-width: 100%;
+}
+
+.input-group-text {
+    background-color: var(--gray-light);
+    border: 1px solid var(--gray-medium);
+    color: var(--gray-dark);
+}
+
+/* Estilos para el resumen de inventario */
+.inventory-summary {
+    background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(58, 12, 163, 0.05));
+    border-radius: var(--border-radius);
+    padding: var(--spacing-md);
+    border: 1px solid rgba(67, 97, 238, 0.2);
+}
+
+.inventory-summary h6 {
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+/* Estilos para indicador de margen de ganancia */
+.margin-indicator {
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: var(--border-radius-sm);
+    background: var(--light-color);
+    display: inline-block;
+    min-width: 120px;
+    text-align: center;
+}
+
+.margin-positive {
+    color: var(--success-color);
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.margin-negative {
+    color: var(--danger-color);
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.margin-neutral {
+    color: var(--warning-color);
+    background-color: rgba(255, 190, 11, 0.1);
+}
+
+/* Mejoras para pantallas pequeñas en módulo productos */
+@media (max-width: 768px) {
+    .productos-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .inventory-summary {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .form-container .grid-3 {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-container .grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Estilos para el header de producto */
+.producto-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(58, 12, 163, 0.05));
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-md);
+}
+
+.producto-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    color: white;
+    border-radius: var(--border-radius);
+    font-size: 24px;
+}
+
+/* Tooltip para stock bajo */
+[title]:hover:after {
+    content: attr(title);
+    position: absolute;
+    background: var(--dark-color);
+    color: white;
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+    font-size: 12px;
+    z-index: 1000;
+    white-space: nowrap;
+    margin-top: 5px;
+}

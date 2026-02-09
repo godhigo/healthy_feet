@@ -688,6 +688,158 @@ def api_cambiar_estado_plantilla(id):
             return jsonify({"success": True, "message": "Estado actualizado"})
     finally:
         conn.close()
+        
+@app.route('/productos/nuevo', methods=['GET', 'POST'])
+@admin_required
+@handle_db_errors
+def nuevo_producto():
+    """Agregar nuevo producto"""
+    if request.method == 'GET':
+        return render_template('nuevo_producto.html')
+    
+    # Procesar formulario POST
+    nombre = request.form.get('nombre', '').strip()
+    categoria = request.form.get('categoria', '').strip()
+    proveedor = request.form.get('proveedor', '').strip()
+    descripcion = request.form.get('descripcion', '').strip()
+    precio_compra = request.form.get('precio_compra', '0')
+    precio_venta = request.form.get('precio_venta', '0')
+    stock = request.form.get('stock', '0')
+    stock_minimo = request.form.get('stock_minimo', '5')
+    estado = request.form.get('estado', 'activo')
+    
+    # Validaciones
+    if not nombre:
+        flash("El nombre es requerido", "error")
+        return redirect(request.url)
+    
+    try:
+        precio_compra = float(precio_compra)
+        precio_venta = float(precio_venta)
+        stock = int(stock)
+        stock_minimo = int(stock_minimo)
+        
+        if precio_compra < 0 or precio_venta < 0 or stock < 0 or stock_minimo < 0:
+            flash("Los valores no pueden ser negativos", "error")
+            return redirect(request.url)
+            
+        if precio_venta < precio_compra:
+            flash("El precio de venta no puede ser menor al precio de compra", "error")
+            return redirect(request.url)
+            
+    except ValueError:
+        flash("Valores numéricos inválidos", "error")
+        return redirect(request.url)
+    
+    # Insertar en base de datos
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO productos (nombre, categoria, proveedor, descripcion, precio_compra, 
+                                       precio_venta, stock, stock_minimo, estado)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (nombre, categoria, proveedor, descripcion, precio_compra, 
+                  precio_venta, stock, stock_minimo, estado))
+            conn.commit()
+    finally:
+        conn.close()
+    
+    flash("✅ Producto agregado exitosamente", "success")
+    return redirect(('/productos'))
+
+
+@app.route('/productos/editar/<int:id>', methods=['GET', 'POST'])
+@admin_required
+@handle_db_errors
+def editar_producto(id):
+    """Editar producto existente"""
+    conn = get_connection()
+    
+    if request.method == 'GET':
+        try:
+            with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+                cursor.execute("SELECT * FROM productos WHERE id = %s", (id,))
+                producto = cursor.fetchone()
+                if not producto:
+                    flash("Producto no encontrado", "error")
+                    return redirect(('/productos'))
+        finally:
+            conn.close()
+        
+        return render_template('editar_producto.html', producto=producto)
+    
+    # Procesar actualización
+    nombre = request.form.get('nombre', '').strip()
+    categoria = request.form.get('categoria', '').strip()
+    proveedor = request.form.get('proveedor', '').strip()
+    descripcion = request.form.get('descripcion', '').strip()
+    precio_compra = request.form.get('precio_compra', '0')
+    precio_venta = request.form.get('precio_venta', '0')
+    stock = request.form.get('stock', '0')
+    stock_minimo = request.form.get('stock_minimo', '5')
+    estado = request.form.get('estado', 'activo')
+    
+    if not nombre:
+        flash("El nombre es requerido", "error")
+        return redirect(request.url)
+    
+    try:
+        precio_compra = float(precio_compra)
+        precio_venta = float(precio_venta)
+        stock = int(stock)
+        stock_minimo = int(stock_minimo)
+        
+        if precio_compra < 0 or precio_venta < 0 or stock < 0 or stock_minimo < 0:
+            flash("Los valores no pueden ser negativos", "error")
+            return redirect(request.url)
+            
+        if precio_venta < precio_compra:
+            flash("El precio de venta no puede ser menor al precio de compra", "error")
+            return redirect(request.url)
+            
+    except ValueError:
+        flash("Valores numéricos inválidos", "error")
+        return redirect(request.url)
+    
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                UPDATE productos
+                SET nombre = %s, categoria = %s, proveedor = %s, descripcion = %s,
+                    precio_compra = %s, precio_venta = %s,
+                    stock = %s, stock_minimo = %s, estado = %s
+                WHERE id = %s
+            """, (nombre, categoria, proveedor, descripcion, precio_compra, 
+                  precio_venta, stock, stock_minimo, estado, id))
+            conn.commit()
+    finally:
+        conn.close()
+    
+    flash("✅ Producto actualizado exitosamente", "success")
+    return redirect(('/productos'))
+
+
+@app.route('/productos/<int:id>', methods=['DELETE'])
+@admin_required
+@handle_db_errors
+def eliminar_producto(id):
+    """Eliminar producto"""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            # Verificar si el producto existe
+            cursor.execute("SELECT id FROM productos WHERE id = %s", (id,))
+            if not cursor.fetchone():
+                return jsonify({"success": False, "message": "Producto no encontrado"}), 404
+            
+            # Eliminar el producto
+            cursor.execute("DELETE FROM productos WHERE id = %s", (id,))
+            conn.commit()
+    finally:
+        conn.close()
+    
+    return jsonify({"success": True, "message": "Producto eliminado exitosamente"})
 
 # ============================================================================
 # RUTAS DE EMPLEADOS

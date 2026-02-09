@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Producto - Healthy Feet{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-between align-center">
+        <div>
+            <h1 class="content-title">
+                <i class="fas fa-plus-circle"></i>
+                Nuevo Producto
+            </h1>
+            <p class="content-subtitle">Agregar nuevo producto al inventario</p>
+        </div>
+        
+        <div class="d-flex align-center gap-3">
+            <a href="{{ url_for('productos') }}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container-card">
+    <h3 class="mb-4 d-flex align-center gap-2">
+        <i class="fas fa-box text-primary"></i> 
+        Información del Producto
+    </h3>
+    
+    <form method="POST" action="{{ url_for('nuevo_producto') }}" class="form-container">
+        <div class="grid grid-2 gap-3">
+            <div class="form-group">
+                <label for="nombre" class="form-label">
+                    <i class="fas fa-tag text-primary"></i> Nombre del Producto *
+                </label>
+                <input type="text" 
+                       id="nombre" 
+                       name="nombre" 
+                       class="form-control" 
+                       placeholder="Ej: Plantillas Deportivas Premium"
+                       required
+                       maxlength="100"
+                       autocomplete="off"
+                       autofocus>
+                <small class="text-muted">Nombre descriptivo del producto</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="categoria" class="form-label">
+                    <i class="fas fa-folder text-primary"></i> Categoría
+                </label>
+                <input type="text" 
+                       id="categoria" 
+                       name="categoria" 
+                       class="form-control" 
+                       placeholder="Ej: Plantillas, Calzado, Accesorios"
+                       maxlength="50"
+                       autocomplete="off">
+                <small class="text-muted">Clasifica el producto</small>
+            </div>
+        </div>
+        
+        <div class="form-group mt-3">
+            <label for="descripcion" class="form-label">
+                <i class="fas fa-align-left text-primary"></i> Descripción
+            </label>
+            <textarea id="descripcion" 
+                      name="descripcion" 
+                      class="form-control" 
+                      rows="3"
+                      placeholder="Describe las características del producto..."
+                      maxlength="500"></textarea>
+            <small class="text-muted">Máximo 500 caracteres</small>
+        </div>
+        
+        <div class="grid grid-2 gap-3 mt-3">
+            <div class="form-group">
+                <label for="proveedor" class="form-label">
+                    <i class="fas fa-truck text-primary"></i> Proveedor
+                </label>
+                <input type="text" 
+                       id="proveedor" 
+                       name="proveedor" 
+                       class="form-control" 
+                       placeholder="Nombre del proveedor"
+                       maxlength="100"
+                       autocomplete="off">
+            </div>
+            
+            <div class="form-group">
+                <label for="estado" class="form-label">
+                    <i class="fas fa-toggle-on text-primary"></i> Estado
+                </label>
+                <select id="estado" name="estado" class="form-control">
+                    <option value="activo" selected>Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                </select>
+            </div>
+        </div>
+        
+        <h4 class="mt-4 mb-3 text-primary">
+            <i class="fas fa-money-bill-wave"></i> Precios y Stock
+        </h4>
+        
+        <div class="grid grid-3 gap-3">
+            <div class="form-group">
+                <label for="precio_compra" class="form-label">
+                    <i class="fas fa-shopping-cart text-primary"></i> Precio de Compra *
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" 
+                           id="precio_compra" 
+                           name="precio_compra" 
+                           class="form-control" 
+                           step="0.01" 
+                           min="0" 
+                           required
+                           placeholder="0.00">
+                </div>
+                <small class="text-muted">Costo del producto</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="precio_venta" class="form-label">
+                    <i class="fas fa-tag text-primary"></i> Precio de Venta *
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" 
+                           id="precio_venta" 
+                           name="precio_venta" 
+                           class="form-control" 
+                           step="0.01" 
+                           min="0" 
+                           required
+                           placeholder="0.00">
+                </div>
+                <small class="text-muted">Precio al público</small>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-chart-line text-primary"></i> Margen de Ganancia
+                </label>
+                <div class="form-control bg-light" id="margenGanancia">
+                    <span class="text-muted">Ingresa los precios</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-2 gap-3 mt-3">
+            <div class="form-group">
+                <label for="stock" class="form-label">
+                    <i class="fas fa-boxes text-primary"></i> Stock Inicial *
+                </label>
+                <input type="number" 
+                       id="stock" 
+                       name="stock" 
+                       class="form-control" 
+                       min="0" 
+                       value="0" 
+                       required>
+                <small class="text-muted">Cantidad disponible</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="stock_minimo" class="form-label">
+                    <i class="fas fa-exclamation-triangle text-primary"></i> Stock Mínimo *
+                </label>
+                <input type="number" 
+                       id="stock_minimo" 
+                       name="stock_minimo" 
+                       class="form-control" 
+                       min="0" 
+                       value="5" 
+                       required>
+                <small class="text-muted">Alerta cuando el stock llegue a este nivel</small>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-between align-center mt-4 pt-3 border-top">
+            <a href="{{ url_for('productos') }}" class="btn btn-outline">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+            
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save"></i> Guardar Producto
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const precioCompra = document.getElementById('precio_compra');
+    const precioVenta = document.getElementById('precio_venta');
+    const margenGanancia = document.getElementById('margenGanancia');
+    
+    function calcularMargen() {
+        const compra = parseFloat(precioCompra.value) || 0;
+        const venta = parseFloat(precioVenta.value) || 0;
+        
+        if (compra > 0 && venta > 0) {
+            const margen = venta - compra;
+            const porcentaje = ((margen / compra) * 100).toFixed(2);
+            
+            let color = '#28a745';
+            let icon = 'fas fa-arrow-up';
+            
+            if (margen < 0) {
+                color = '#dc3545';
+                icon = 'fas fa-arrow-down';
+            } else if (margen < compra * 0.3) {
+                color = '#ffc107';
+                icon = 'fas fa-minus';
+            }
+            
+            margenGanancia.innerHTML = `
+                <span style="color: ${color}">
+                    <i class="${icon}"></i> $${margen.toFixed(2)} (${porcentaje}%)
+                </span>
+            `;
+        } else {
+            margenGanancia.innerHTML = '<span class="text-muted">Ingresa los precios</span>';
+        }
+    }
+    
+    precioCompra.addEventListener('input', calcularMargen);
+    precioVenta.addEventListener('input', calcularMargen);
+    
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const compra = parseFloat(precioCompra.value) || 0;
+        const venta = parseFloat(precioVenta.value) || 0;
+        
+        if (venta <= compra) {
+            e.preventDefault();
+            alert('El precio de venta debe ser mayor que el precio de compra.');
+            precioVenta.focus();
+            return false;
+        }
+        
+        const stock = parseInt(document.getElementById('stock').value) || 0;
+        const stockMinimo = parseInt(document.getElementById('stock_minimo').value) || 0;
+        
+        if (stock < stockMinimo) {
+            if (!confirm(`⚠️ El stock inicial (${stock}) es menor que el stock mínimo (${stockMinimo}). ¿Deseas continuar?`)) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        
+        return true;
+    });
+    
+    calcularMargen();
+});
+</script>
+{% endblock %}
