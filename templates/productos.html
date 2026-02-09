@@ -65,8 +65,8 @@
 <div class="container-card">
     <div class="d-flex justify-between align-center mb-4">
         <div>
-            <h3 class="d-flex align-center gap-2 mb-0">
-                <i class="fas fa-boxes text-primary"></i> 
+            <h3 class="mb-0">
+                <i class="fas fa-boxes text"></i> 
                 Lista de Productos
                 <span class="badge badge-primary">{{ productos|length }}</span>
             </h3>
@@ -125,7 +125,7 @@
                         {% endif %}
                     </td>
                     <td>
-                        <span class="text-muted">${{ "%.2f"|format(producto.precio_compra) }}</span>
+                        <span class="badge badge-success">${{ "%.2f"|format(producto.precio_compra) }}</span>
                     </td>
                     <td>
                         <span class="badge badge-success">${{ "%.2f"|format(producto.precio_venta) }}</span>
@@ -141,7 +141,7 @@
                             {% endif %}
                         </div>
                         {% if producto.stock_minimo > 0 %}
-                        <small class="text-muted d-block mt-1">Mínimo: {{ producto.stock_minimo }}</small>
+                        <small class="badge badge-warning">Mínimo: {{ producto.stock_minimo }}</small>
                         {% endif %}
                     </td>
                     <td>
@@ -154,16 +154,14 @@
                     <td>
                         <div class="d-flex gap-2">
                             <a href="{{ url_for('editar_producto', id=producto.id) }}" 
-                               class="btn btn-outline btn-sm" 
-                               title="Editar">
+                               class="btn btn-outline btn-sm">
                                 <i class="fas fa-edit"></i>
                             </a>
                             
                             <button type="button" 
                                     class="btn btn-outline-danger btn-sm delete-producto" 
                                     data-id="{{ producto.id }}"
-                                    data-nombre="{{ producto.nombre }}"
-                                    title="Eliminar">
+                                    data-nombre="{{ producto.nombre }}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -179,13 +177,22 @@
             <div>
                 <h6 class="mb-1"><i class="fas fa-chart-pie"></i> Resumen del Inventario</h6>
                 <p class="text-muted small mb-0">
-                    Total valor inventario: <strong>${{ "%.2f"|format(valor_total) if valor_total else "0.00" }}</strong>
+                    Total valor inventario: <strong>${{ "%.2f"|format(valor_total) }}</strong>
+                    {% if bajo_stock_count > 0 %}
+                    <span class="badge badge-danger ml-2">{{ bajo_stock_count }} bajo stock </span>
+                    {% endif %}
                 </p>
             </div>
             <div class="text-right">
                 <p class="text-muted small mb-0">
-                    <span class="badge badge-danger">{{ productos_bajo_stock|length }}</span> productos con stock bajo
+                    <span class="badge badge-primary">{{ productos|length }}</span> productos totales
+                    <span class="badge badge-danger ml-2">{{ bajo_stock_count }}</span> productos con stock bajo
                 </p>
+                {% if bajo_stock_count > 0 %}
+                <small class="text-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Alerta: {{ bajo_stock_count }} producto(s) necesita(n) reposición
+                </small>
+                {% endif %}
             </div>
         </div>
     </div>

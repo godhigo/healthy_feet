@@ -510,50 +510,6 @@ def dashboard_data():
 # RUTAS PARA STAFF
 # ============================================================================
 
-@app.route('/productos')
-@login_required
-def productos():
-    """Gestión de productos - Accesible para admin y staff"""
-    if current_user.role not in ['admin', 'staff']:
-        flash("Acceso restringido", "error")
-        return redirect("/")
-    
-    # Obtener filtros
-    filtro = request.args.get('nombre', '').strip()
-    categoria = request.args.get('categoria', '')
-    
-    conn = get_connection()
-    try:
-        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-            query = "SELECT * FROM productos WHERE 1=1"
-            params = []
-            
-            if filtro:
-                query += " AND nombre LIKE %s"
-                params.append(f"%{filtro}%")
-            
-            if categoria:
-                query += " AND categoria = %s"
-                params.append(categoria)
-            
-            query += " ORDER BY nombre"
-            cursor.execute(query, params)
-            productos = cursor.fetchall()
-            
-            # Obtener categorías únicas para el filtro
-            cursor.execute("SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL ORDER BY categoria")
-            categorias = cursor.fetchall()
-    finally:
-        conn.close()
-    
-    return render_template(
-        "productos.html",
-        productos=productos,
-        filtro=filtro,
-        categorias=categorias,
-        categoria_seleccionada=categoria
-    )
-
 @app.route('/plantillas')
 @login_required
 def plantillas():
@@ -688,9 +644,79 @@ def api_cambiar_estado_plantilla(id):
             return jsonify({"success": True, "message": "Estado actualizado"})
     finally:
         conn.close()
+
+@app.route('/productos')
+@login_required
+def productos():
+    """Gestión de productos - Accesible para admin y staff"""
+    if current_user.role not in ['admin', 'staff']:
+        flash("Acceso restringido", "error")
+        return redirect("/")
+    
+    # Obtener filtros
+    filtro = request.args.get('nombre', '').strip()
+    categoria = request.args.get('categoria', '')
+    estado = request.args.get('estado', '')
+    
+    conn = get_connection()
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            query = "SELECT * FROM productos WHERE 1=1"
+            params = []
+            
+            if filtro:
+                query += " AND nombre LIKE %s"
+                params.append(f"%{filtro}%")
+            
+            if categoria:
+                query += " AND categoria = %s"
+                params.append(categoria)
+            
+            if estado:
+                query += " AND estado = %s"
+                params.append(estado)
+            
+            query += " ORDER BY nombre"
+            cursor.execute(query, params)
+            productos = cursor.fetchall()
+            
+            # Obtener categorías únicas para el filtro
+            cursor.execute("SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL ORDER BY categoria")
+            categorias = cursor.fetchall()
+            
+            # CALCULAR VALOR TOTAL DEL INVENTARIO
+            cursor.execute("""
+                SELECT 
+                    SUM(precio_venta * stock) as valor_total,
+                    COUNT(CASE WHEN stock <= stock_minimo THEN 1 END) as bajo_stock_count
+                FROM productos
+            """)
+            estadisticas = cursor.fetchone()
+            
+            valor_total = estadisticas['valor_total'] if estadisticas and estadisticas['valor_total'] else 0
+            bajo_stock_count = estadisticas['bajo_stock_count'] if estadisticas else 0
+            
+            # Obtener productos con stock bajo para la lista
+            cursor.execute("SELECT * FROM productos WHERE stock <= stock_minimo")
+            productos_bajo_stock = cursor.fetchall()
+            
+    finally:
+        conn.close()
+    
+    return render_template(
+        "productos.html",
+        productos=productos,
+        filtro=filtro,
+        categorias=categorias,
+        categoria_seleccionada=categoria,
+        estado_seleccionado=estado,
+        valor_total=valor_total,
+        productos_bajo_stock=productos_bajo_stock,
+        bajo_stock_count=bajo_stock_count  # Pasamos el conteo también
+    )
         
 @app.route('/productos/nuevo', methods=['GET', 'POST'])
-@admin_required
+@login_required
 @handle_db_errors
 def nuevo_producto():
     """Agregar nuevo producto"""
@@ -748,9 +774,8 @@ def nuevo_producto():
     flash("✅ Producto agregado exitosamente", "success")
     return redirect(('/productos'))
 
-
 @app.route('/productos/editar/<int:id>', methods=['GET', 'POST'])
-@admin_required
+@login_required
 @handle_db_errors
 def editar_producto(id):
     """Editar producto existente"""
@@ -820,26 +845,31 @@ def editar_producto(id):
     return redirect(('/productos'))
 
 
-@app.route('/productos/<int:id>', methods=['DELETE'])
-@admin_required
+@app.route('/productos/<int:id>/eliminar', methods=['POST'])
+@login_required
 @handle_db_errors
 def eliminar_producto(id):
-    """Eliminar producto"""
+    """Eliminar producto (usando POST en lugar de DELETE)"""
     conn = get_connection()
     try:
         with conn.cursor() as cursor:
             # Verificar si el producto existe
-            cursor.execute("SELECT id FROM productos WHERE id = %s", (id,))
-            if not cursor.fetchone():
-                return jsonify({"success": False, "message": "Producto no encontrado"}), 404
+            cursor.execute("SELECT id, nombre FROM productos WHERE id = %s", (id,))
+            producto = cursor.fetchone()
+            
+            if not producto:
+                flash(f"Producto no encontrado", "error")
+                return redirect(('/productos'))
             
             # Eliminar el producto
             cursor.execute("DELETE FROM productos WHERE id = %s", (id,))
             conn.commit()
+            
+            flash(f"✅ Producto '{producto['nombre']}' eliminado exitosamente", "success")
     finally:
         conn.close()
     
-    return jsonify({"success": True, "message": "Producto eliminado exitosamente"})
+    return redirect(('/productos'))
 
 # ============================================================================
 # RUTAS DE EMPLEADOS
