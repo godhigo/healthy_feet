@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Administración - Healthy Feet{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="d-flex justify-between align-center">
+        <div>
+            <h1 class="content-title">
+                <i class="fas fa-cog"></i>
+                Panel de Administración
+            </h1>
+            <p class="content-subtitle">Herramientas y configuración del sistema</p>
+        </div>
+        
+        <div class="d-flex align-center gap-3">
+            <div class="user-info">
+                <span class="text-primary">{{ current_user.nombre }}</span>
+                <span class="text-muted">• {{ current_user.email }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="admin-stats">
+    <div class="row">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card-admin">
+                <div class="stat-icon-admin">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value-admin">{{ total_usuarios }}</div>
+                <div class="stat-label-admin">Usuarios</div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card-admin">
+                <div class="stat-icon-admin">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <div class="stat-value-admin">{{ total_empleados }}</div>
+                <div class="stat-label-admin">Empleados</div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card-admin">
+                <div class="stat-icon-admin">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+                <div class="stat-value-admin">{{ total_clientes }}</div>
+                <div class="stat-label-admin">Clientes</div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card-admin">
+                <div class="stat-icon-admin">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="stat-value-admin">{{ citas_hoy }}</div>
+                <div class="stat-label-admin">Citas Hoy</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-card">
+    <h3 class="mb-4">
+        <i class="fas fa-tools text-primary"></i> 
+        Herramientas de Administración
+    </h3>
+    
+    <div class="admin-tools-grid">
+        <a href="{{ url_for('system_info') }}" class="admin-tool-card">
+            <div class="admin-tool-icon">
+                <i class="fas fa-server text-primary"></i>
+            </div>
+            <div class="admin-tool-content">
+                <h5>Información del Sistema</h5>
+                <p>Ver estadísticas y estado del servidor</p>
+            </div>
+        </a>
+        
+        <a href="{{ url_for('backup_database') }}" class="admin-tool-card" onclick="return confirm('¿Deseas crear un respaldo de la base de datos?')">
+            <div class="admin-tool-icon">
+                <i class="fas fa-database text-success"></i>
+            </div>
+            <div class="admin-tool-content">
+                <h5>Respaldo de Base de Datos</h5>
+                <p>Crear copia de seguridad del sistema</p>
+            </div>
+        </a>
+        
+        <div class="admin-tool-card" onclick="alert('Esta función estará disponible próximamente')">
+            <div class="admin-tool-icon">
+                <i class="fas fa-chart-bar text-warning"></i>
+            </div>
+            <div class="admin-tool-content">
+                <h5>Reportes Avanzados</h5>
+                <p>Generar reportes detallados</p>
+            </div>
+        </div>
+        
+        <div class="admin-tool-card" onclick="alert('Esta función estará disponible próximamente')">
+            <div class="admin-tool-icon">
+                <i class="fas fa-user-shield text-danger"></i>
+            </div>
+            <div class="admin-tool-content">
+                <h5>Gestión de Permisos</h5>
+                <p>Configurar roles y accesos</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-card mt-4">
+    <h3 class="mb-4">
+        <i class="fas fa-history text-primary"></i> 
+        Actividad Reciente
+    </h3>
+    
+    {% if actividades %}
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for actividad in actividades %}
+                <tr>
+                    <td>
+                        <span class="badge 
+                            {% if actividad.tipo == 'Nuevo cliente' %}badge-success
+                            {% elif actividad.tipo == 'Nueva cita' %}badge-primary
+                            {% else %}badge-secondary{% endif %}">
+                            {{ actividad.tipo }}
+                        </span>
+                    </td>
+                    <td>{{ actividad.nombre }}</td>
+                    <td>
+                        <small class="text-muted">
+                            {% if actividad.fecha %}
+                                {{ actividad.fecha|format_date }} 
+                                {% if actividad.fecha|string != 'None' %}
+                                    {{ actividad.fecha|format_time }}
+                                {% endif %}
+                            {% endif %}
+                        </small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center p-4">
+        <i class="fas fa-history fa-2x text-muted mb-2"></i>
+        <h5 class="text-muted">No hay actividad reciente</h5>
+        <p class="text-muted small">Las actividades del sistema aparecerán aquí</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.admin-stats {
+    margin-bottom: 2rem;
+}
+
+.stat-card-admin {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: transform 0.3s;
+    height: 100%;
+}
+
+.stat-card-admin:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+.stat-icon-admin {
+    font-size: 2.5rem;
+    color: #4361ee;
+    margin-bottom: 1rem;
+}
+
+.stat-value-admin {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label-admin {
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.admin-tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.admin-tool-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 2px solid transparent;
+    transition: all 0.3s;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.admin-tool-card:hover {
+    border-color: #4361ee;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(67, 97, 238, 0.2);
+}
+
+.admin-tool-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.admin-tool-content h5 {
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.admin-tool-content p {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .admin-tools-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar estadísticas cada 5 minutos
+    setInterval(() => {
+        fetch('/admin/refresh_stats')
+            .then(response => response.json())
+            .then(data => {
+                // Aquí podrías actualizar las estadísticas si implementas un endpoint
+                console.log('Estadísticas actualizadas');
+            })
+            .catch(error => console.error('Error:', error));
+    }, 300000); // 5 minutos
+});
+</script>
+{% endblock %}

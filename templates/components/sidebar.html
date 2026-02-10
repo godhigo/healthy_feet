@@ -71,7 +71,7 @@
         {% if current_user.email == "admin@healthyfeet.com" %}
         <a href="{{ url_for('admin_panel') }}" class="sidebar-link {% if request.path.startswith('/admin') %}active{% endif %}">
             <i class="fas fa-cog sidebar-icon"></i>
-            <span>Super Admin</span>
+            <span>Administración</span>
         </a>
         {% endif %}
         {% endif %}

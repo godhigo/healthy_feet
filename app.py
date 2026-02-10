@@ -979,24 +979,24 @@ def actualizar_empleado():
         return redirect("/empleados")
 
 # ============================================================================
-# RUTAS DE ADMINISTRACIÓN (SOLO SUPERADMIN)
+# RUTAS DE ADMINISTRACIÓN (SOLO ADMIN)
 # ============================================================================
 
-def superadmin_required(f):
-    """Decorador para requerir ser el superadmin principal"""
+def admin_required(f):
+    """Decorador para requerir ser el admin principal"""
     @wraps(f)
     @login_required
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated or current_user.email != "admin@healthyfeet.com":
-            flash("Acceso restringido al superadministrador", "error")
+            flash("Acceso restringido al administrador", "error")
             return redirect("/")
         return f(*args, **kwargs)
     return decorated_function
 
 @app.route('/admin')
-@superadmin_required
+@admin_required
 def admin_panel():
-    """Panel de administración - Solo para superadmin"""
+    """Panel de administración"""
     conn = get_connection()
     try:
         with conn.cursor(pymysql.cursors.DictCursor) as cursor:
@@ -1016,31 +1016,53 @@ def admin_panel():
             cursor.execute("SELECT IFNULL(SUM(total), 0) as total FROM ventas WHERE DATE(fecha) = CURDATE()")
             ventas_hoy = cursor.fetchone()['total']
             
-            # Últimas actividades (simplificado)
+            # Últimas actividades - Simplificado para evitar problemas de UNION
+            actividades = []
+            
+            # 1. Nuevos clientes (últimos 5)
             cursor.execute("""
                 SELECT 'Nuevo cliente' as tipo, nombre, fecha_registro as fecha 
                 FROM clientes 
                 ORDER BY fecha_registro DESC 
                 LIMIT 5
-                
-                UNION
-                
-                SELECT 'Nueva cita' as tipo, CONCAT('Cita para ', c.nombre) as nombre, NOW() as fecha
+            """)
+            nuevos_clientes = cursor.fetchall()
+            actividades.extend(nuevos_clientes)
+            
+            # 2. Citas de hoy
+            cursor.execute("""
+                SELECT 'Nueva cita' as tipo, CONCAT('Cita para ', c.nombre) as nombre, 
+                       CONCAT(ci.fecha, ' ', ci.hora) as fecha
                 FROM citas ci
                 JOIN clientes c ON ci.id_cliente = c.id
                 WHERE ci.fecha = CURDATE()
                 ORDER BY ci.hora DESC
                 LIMIT 5
-                
-                ORDER BY fecha DESC
-                LIMIT 10
             """)
-            actividades = cursor.fetchall()
+            citas_hoy_act = cursor.fetchall()
+            actividades.extend(citas_hoy_act)
+            
+            # Ordenar por fecha (más reciente primero) y limitar a 10
+            # Como fecha puede ser string, convertimos a datetime si es posible
+            def get_sort_key(item):
+                fecha_str = item.get('fecha', '')
+                try:
+                    # Intentar parsear como datetime
+                    if ' ' in fecha_str:
+                        return datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
+                    else:
+                        return datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
+                except (ValueError, TypeError):
+                    # Si falla, usar string vacío
+                    return datetime.min
+            
+            actividades.sort(key=get_sort_key, reverse=True)
+            actividades = actividades[:10]
     finally:
         conn.close()
     
     return render_template(
-        'admin/panel.html',
+        'admin_panel.html',
         total_usuarios=total_usuarios,
         total_empleados=total_empleados,
         total_clientes=total_clientes,
@@ -1050,24 +1072,29 @@ def admin_panel():
     )
 
 @app.route('/admin/system_info')
-@superadmin_required
+@admin_required
 def system_info():
-    """Información del sistema"""
-    
     system_info = {
         "python_version": platform.python_version(),
         "system": platform.system(),
         "processor": platform.processor(),
         "memory_used": f"{psutil.virtual_memory().percent}%",
         "disk_used": f"{psutil.disk_usage('/').percent}%",
-        "uptime": str(datetime.datetime.now() - datetime.datetime.fromtimestamp(psutil.boot_time())),
+        "uptime": str(datetime.now() - datetime.fromtimestamp(psutil.boot_time())),
         "cpu_usage": f"{psutil.cpu_percent()}%"
     }
-    
-    return render_template('admin/system_info.html', system_info=system_info)
+
+    return render_template(
+        'admin/system_info.html',
+        system_info=system_info,
+        db_host=app.config['DB_HOST'],
+        db_name=app.config['DB_NAME'],
+        db_user=app.config['DB_USER']
+    )
+
 
 @app.route('/admin/backup')
-@superadmin_required
+@admin_required
 def backup_database():
     """Crear respaldo de la base de datos"""
     import subprocess
@@ -1080,9 +1107,9 @@ def backup_database():
         # Crear respaldo usando mysqldump
         command = [
             'mysqldump',
-            '-u', 'root',
+            '-u', app.config["DB_USER"],
             f'-p{app.config["DB_PASSWORD"]}',
-            'healthy feet'
+            app.config["DB_NAME"]
         ]
         
         with open(backup_file, 'w') as f:

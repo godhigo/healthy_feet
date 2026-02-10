@@ -22,22 +22,28 @@
     </div>
 </div>
 
-<div class="citas-header">
-    <div class="date-selector">
-        <i class="fas fa-calendar-alt text-primary"></i>
-        <form method="GET" action="{{ url_for('citas') }}" class="d-flex align-center gap-2">
-            <input type="date" 
-                   name="fecha" 
-                   value="{{ fecha_actual }}" 
-                   class="form-control"
-                   onchange="this.form.submit()"
-                   style="width: auto;">
-        </form>
-    </div>
-    
-    <button class="btn btn-success" id="toggle-form">
-        <i class="fas fa-plus"></i> Nueva Cita
-    </button>
+<div class="filtros-ventas">
+    <form method="POST" action="{{ url_for('ventas') }}" class="filtros-grid">
+        <div class="form-group">
+            <label for="filtro" class="form-label">Filtrar por:</label>
+            <select id="filtro" name="filtro" class="form-control form-control-sm">
+                <option value="dia" {% if filtro == 'dia' %}selected{% endif %}>Día</option>
+                <option value="semana" {% if filtro == 'semana' %}selected{% endif %}>Semana</option>
+                <option value="mes" {% if filtro == 'mes' %}selected{% endif %}>Mes</option>
+                <option value="ano" {% if filtro == 'ano' %}selected{% endif %}>Año</option>
+            </select>
+        </div>
+        
+        <div id="campo-extra" class="form-group">
+            <!-- Campo dinámico se insertará aquí -->
+        </div>
+        
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary btn-sm btn-full">
+                <i class="fas fa-filter"></i> Aplicar Filtro
+            </button>
+        </div>
+    </form>
 </div>
 
 <!-- Formulario Nueva Cita (oculto por defecto) -->
@@ -126,11 +132,17 @@
 
 <!-- Lista de Citas del Día -->
 <div class="container-card">
-    <h3 class="mb-4">
-        <i class="fas fa-calendar-day"></i> 
-        Citas del {{ fecha_actual|format_date }}
-        <span class="badge badge-primary">{{ citas_dia|length }}</span>
-    </h3>
+    <div class="d-flex justify-between align-center mb-3">
+        <h3 class="mb-4">
+            <i class="fas fa-calendar-day"></i> 
+            Citas del {{ fecha_actual|format_date }}
+            <span class="badge badge-primary">{{ citas_dia|length }}</span>
+        </h3>
+
+        <button class="btn btn-success" id="toggle-form">   
+            <i class="fas fa-plus"></i> Nueva Cita
+        </button>
+    </div>
     
     {% if citas_dia %}
     <div class="citas-grid">
@@ -222,6 +234,80 @@
 </div>
 
 <script>
+function mostrarCampoFiltro() {
+    const filtro = document.getElementById('filtro').value;
+    const campoExtra = document.getElementById('campo-extra');
+    
+    let html = '';
+    let currentValue = '{{ valor_filtro or "" }}';
+    
+    if (filtro === 'dia') {
+        html = `
+            <label for="valor_filtro" class="form-label">Seleccionar día:</label>
+            <input type="date" 
+                   id="valor_filtro" 
+                   name="valor_filtro" 
+                   class="form-control form-control-sm"
+                   value="${currentValue}"
+                   required>
+        `;
+    } else if (filtro === 'semana') {
+        html = `
+            <label for="valor_filtro" class="form-label">Seleccionar semana:</label>
+            <input type="week" 
+                   id="valor_filtro" 
+                   name="valor_filtro" 
+                   class="form-control form-control-sm"
+                   value="${currentValue}"
+                   required>
+        `;
+    } else if (filtro === 'mes') {
+        html = `
+            <label for="valor_filtro" class="form-label">Seleccionar mes:</label>
+            <input type="month" 
+                   id="valor_filtro" 
+                   name="valor_filtro" 
+                   class="form-control form-control-sm"
+                   value="${currentValue}"
+                   required>
+        `;
+    } else if (filtro === 'ano') {
+        html = `
+            <label for="valor_filtro" class="form-label">Seleccionar año:</label>
+            <input type="number" 
+                   id="valor_filtro" 
+                   name="valor_filtro" 
+                   class="form-control form-control-sm"
+                   value="${currentValue}"
+                   min="2020" 
+                   max="2100" 
+                   placeholder="2024"
+                   required>
+        `;
+    }
+    
+    campoExtra.innerHTML = html;
+}
+
+// Inicializar campos al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    mostrarCampoFiltro();
+    
+    // Agregar evento al select de filtro
+    const filtroSelect = document.getElementById('filtro');
+    if (filtroSelect) {
+        filtroSelect.addEventListener('change', mostrarCampoFiltro);
+    }
+    
+    // Agregar evento a los botones de ver detalle
+    document.querySelectorAll('.view-detail-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const ventaId = this.getAttribute('data-id');
+            verDetalle(ventaId);
+        });
+    });
+});
+
 // Mostrar/ocultar formulario nueva cita
 document.addEventListener('DOMContentLoaded', function() {
     const toggleBtn = document.getElementById('toggle-form');
