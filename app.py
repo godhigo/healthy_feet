@@ -714,7 +714,257 @@ def productos():
         productos_bajo_stock=productos_bajo_stock,
         bajo_stock_count=bajo_stock_count  # Pasamos el conteo también
     )
-        
+
+@app.route('/api/admin/dashboard')
+@admin_required
+def api_admin_dashboard():
+    """API completa para el panel de administración PRO"""
+    conn = get_connection()
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            # ---------- 1. KPI: Ventas hoy vs ayer ----------
+            cursor.execute("""
+                SELECT 
+                    IFNULL(SUM(CASE WHEN DATE(fecha) = CURDATE() THEN total END), 0) as ventas_hoy,
+                    IFNULL(SUM(CASE WHEN DATE(fecha) = CURDATE() - INTERVAL 1 DAY THEN total END), 0) as ventas_ayer
+                FROM ventas
+            """)
+            ventas_hoy_ayer = cursor.fetchone()
+            
+            # ---------- 2. KPI: Citas hoy vs ayer ----------
+            cursor.execute("""
+                SELECT 
+                    COUNT(CASE WHEN fecha = CURDATE() THEN 1 END) as citas_hoy,
+                    COUNT(CASE WHEN fecha = CURDATE() - INTERVAL 1 DAY THEN 1 END) as citas_ayer
+                FROM citas
+                WHERE estado NOT IN ('cancelada', 'finalizada')
+            """)
+            citas_hoy_ayer = cursor.fetchone()
+            
+            # ---------- 3. KPI: Clientes nuevos hoy vs ayer ----------
+            cursor.execute("""
+                SELECT 
+                    COUNT(CASE WHEN DATE(fecha_registro) = CURDATE() THEN 1 END) as nuevos_hoy,
+                    COUNT(CASE WHEN DATE(fecha_registro) = CURDATE() - INTERVAL 1 DAY THEN 1 END) as nuevos_ayer
+                FROM clientes
+            """)
+            clientes_nuevos = cursor.fetchone()
+            
+            # ---------- 4. Resumen financiero ----------
+            cursor.execute("""
+                SELECT 
+                    IFNULL(SUM(CASE WHEN DATE(fecha) = CURDATE() THEN total END), 0) as total_hoy,
+                    IFNULL(SUM(CASE WHEN YEARWEEK(fecha, 1) = YEARWEEK(CURDATE(), 1) THEN total END), 0) as total_semana,
+                    IFNULL(SUM(CASE WHEN DATE_FORMAT(fecha, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m') THEN total END), 0) as total_mes,
+                    IFNULL(SUM(CASE WHEN YEAR(fecha) = YEAR(CURDATE()) THEN total END), 0) as total_ano,
+                    AVG(total) as ticket_promedio
+                FROM ventas
+            """)
+            finanzas = cursor.fetchone()
+            
+            # ---------- 5. Top 5 clientes ----------
+            cursor.execute("""
+                SELECT 
+                    c.id,
+                    c.nombre,
+                    c.telefono,
+                    COUNT(v.id) as total_compras,
+                    SUM(v.total) as total_gastado,
+                    MAX(v.fecha) as ultima_compra
+                FROM clientes c
+                LEFT JOIN ventas v ON c.id = v.id_cliente
+                GROUP BY c.id
+                HAVING total_gastado > 0
+                ORDER BY total_gastado DESC
+                LIMIT 5
+            """)
+            top_clientes = cursor.fetchall()
+            
+            # ---------- 6. Alertas: productos con stock bajo ----------
+            cursor.execute("""
+                SELECT 
+                    id, nombre, stock, stock_minimo,
+                    ROUND(((stock_minimo - stock) / stock_minimo * 100), 0) as deficit_porcentaje
+                FROM productos
+                WHERE stock <= stock_minimo AND estado = 'activo'
+                ORDER BY (stock / stock_minimo) ASC
+                LIMIT 5
+            """)
+            productos_bajo_stock = cursor.fetchall()
+            
+            # ---------- 7. Estadísticas de citas (últimos 30 días) ----------
+            cursor.execute("""
+                SELECT 
+                    COUNT(*) as total_citas_30d,
+                    SUM(CASE WHEN estado = 'cancelada' THEN 1 ELSE 0 END) as canceladas_30d,
+                    SUM(CASE WHEN estado = 'finalizada' THEN 1 ELSE 0 END) as finalizadas_30d,
+                    AVG(CASE WHEN DATE(fecha) = CURDATE() THEN 1 ELSE NULL END) as ocupacion_hoy
+                FROM citas
+                WHERE fecha >= CURDATE() - INTERVAL 30 DAY
+            """)
+            citas_stats = cursor.fetchone()
+            
+            # Calcular porcentaje de cancelación
+            if citas_stats['total_citas_30d'] and citas_stats['total_citas_30d'] > 0:
+                citas_stats['porcentaje_cancelacion'] = round(
+                    (citas_stats['canceladas_30d'] / citas_stats['total_citas_30d']) * 100, 1
+                )
+            else:
+                citas_stats['porcentaje_cancelacion'] = 0
+            
+            # ---------- 8. Rendimiento de empleados (ingresos últimos 30 días) ----------
+            cursor.execute("""
+                SELECT 
+                    e.id,
+                    e.nombre,
+                    COUNT(v.id) as ventas_realizadas,
+                    IFNULL(SUM(v.total), 0) as ingresos_generados
+                FROM empleados e
+                LEFT JOIN ventas v ON e.id = v.id_empleado 
+                    AND v.fecha >= CURDATE() - INTERVAL 30 DAY
+                GROUP BY e.id
+                HAVING ingresos_generados > 0 OR ventas_realizadas > 0
+                ORDER BY ingresos_generados DESC
+                LIMIT 5
+            """)
+            empleados_top = cursor.fetchall()
+            
+            # ---------- 9. Ventas últimos 7 días (para gráfica) ----------
+            cursor.execute("""
+                SELECT DATE(fecha) as dia, IFNULL(SUM(total),0) as total
+                FROM ventas
+                WHERE fecha >= CURDATE() - INTERVAL 6 DAY
+                GROUP BY DATE(fecha)
+                ORDER BY dia
+            """)
+            ventas_dias = cursor.fetchall()
+            
+            # ---------- 10. Métodos de pago ----------
+            cursor.execute("""
+                SELECT metodo_pago, COUNT(*) as cantidad, IFNULL(SUM(total),0) as total
+                FROM ventas
+                GROUP BY metodo_pago
+                ORDER BY cantidad DESC
+            """)
+            metodos_pago = cursor.fetchall()
+            
+            # ---------- 11. Top servicios ----------
+            cursor.execute("""
+                SELECT s.nombre_servicio, COUNT(*) as cantidad, IFNULL(SUM(v.total),0) as total
+                FROM ventas v
+                JOIN servicios s ON v.id_servicio = s.id
+                GROUP BY s.nombre_servicio
+                ORDER BY cantidad DESC
+                LIMIT 5
+            """)
+            servicios_top = cursor.fetchall()
+            
+            # ---------- 12. Citas por empleado (últimos 30 días) ----------
+            cursor.execute("""
+                SELECT e.nombre, COUNT(*) as total_citas
+                FROM citas c
+                JOIN empleados e ON c.id_empleado = e.id
+                WHERE c.fecha >= CURDATE() - INTERVAL 30 DAY
+                GROUP BY e.id, e.nombre
+                ORDER BY total_citas DESC
+                LIMIT 5
+            """)
+            citas_empleados = cursor.fetchall()
+            
+            # ---------- 13. Actividad reciente (combinada) ----------
+            actividades = []
+            cursor.execute("""
+                SELECT 'Nuevo cliente' as tipo, nombre, fecha_registro as fecha 
+                FROM clientes 
+                ORDER BY fecha_registro DESC 
+                LIMIT 5
+            """)
+            actividades.extend(cursor.fetchall())
+            
+            cursor.execute("""
+                SELECT 'Nueva cita' as tipo, 
+                       CONCAT('Cita para ', c.nombre) as nombre, 
+                       CONCAT(ci.fecha, ' ', ci.hora) as fecha
+                FROM citas ci
+                JOIN clientes c ON ci.id_cliente = c.id
+                WHERE ci.fecha = CURDATE()
+                ORDER BY ci.hora DESC
+                LIMIT 5
+            """)
+            actividades.extend(cursor.fetchall())
+            
+            actividades.sort(key=lambda x: x.get('fecha', ''), reverse=True)
+            actividades = actividades[:10]
+            
+            # ---------- 14. Estadísticas generales (tarjetas) ----------
+            cursor.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cursor.fetchone()['total']
+            
+            cursor.execute("SELECT COUNT(*) as total FROM empleados WHERE estado = 'activo'")
+            total_empleados = cursor.fetchone()['total']
+            
+            cursor.execute("SELECT COUNT(*) as total FROM clientes")
+            total_clientes = cursor.fetchone()['total']
+            
+            cursor.execute("SELECT COUNT(*) as total FROM citas WHERE fecha = CURDATE()")
+            citas_hoy = cursor.fetchone()['total']
+            
+            cursor.execute("SELECT IFNULL(SUM(total), 0) as total FROM ventas WHERE DATE(fecha) = CURDATE()")
+            ventas_hoy = cursor.fetchone()['total']
+            # ---------- 15. Top productos más vendidos (si existe la relación) ----------
+            try:
+                cursor.execute("""
+                    SELECT p.nombre, COUNT(*) as cantidad, IFNULL(SUM(dp.cantidad), 0) as total_vendido
+                    FROM productos p
+                    LEFT JOIN detalle_venta dp ON p.id = dp.id_producto
+                    GROUP BY p.id
+                    ORDER BY cantidad DESC
+                    LIMIT 5
+                """)
+                top_productos = cursor.fetchall()
+            except pymysql.Error:
+                # Si la tabla no existe, devolvemos array vacío
+                top_productos = []
+
+            # ---------- 16. Estado de plantillas ----------
+            cursor.execute("""
+                SELECT estado, COUNT(*) as cantidad
+                FROM plantillas
+                GROUP BY estado
+                ORDER BY cantidad DESC
+            """)
+            plantillas_estado = cursor.fetchall()
+            
+    finally:
+        conn.close()
+    
+    return jsonify({
+        "ventas_hoy": ventas_hoy_ayer['ventas_hoy'],
+        "ventas_ayer": ventas_hoy_ayer['ventas_ayer'],
+        "citas_hoy": citas_hoy_ayer['citas_hoy'],
+        "citas_ayer": citas_hoy_ayer['citas_ayer'],
+        "nuevos_hoy": clientes_nuevos['nuevos_hoy'],
+        "nuevos_ayer": clientes_nuevos['nuevos_ayer'],
+        "finanzas": finanzas,
+        "top_clientes": top_clientes,
+        "productos_bajo_stock": productos_bajo_stock,
+        "citas_stats": citas_stats,
+        "empleados_top": empleados_top,
+        "ventas_dias": ventas_dias,
+        "metodos_pago": metodos_pago,
+        "servicios_top": servicios_top,
+        "citas_empleados": citas_empleados,
+        "actividades": actividades,
+        "total_usuarios": total_usuarios,
+        "total_empleados": total_empleados,
+        "total_clientes": total_clientes,
+        "citas_hoy_valor": citas_hoy,
+        "ventas_hoy_valor": ventas_hoy,
+        "top_productos": top_productos,
+        "plantillas_estado": plantillas_estado
+    })
+
+
 @app.route('/productos/nuevo', methods=['GET', 'POST'])
 @login_required
 @handle_db_errors
@@ -982,56 +1232,89 @@ def actualizar_empleado():
 # RUTAS DE ADMINISTRACIÓN (SOLO ADMIN)
 # ============================================================================
 
-def admin_required(f):
-    """Decorador para requerir ser el admin principal"""
-    @wraps(f)
-    @login_required
-    def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or current_user.email != "admin@healthyfeet.com":
-            flash("Acceso restringido al administrador", "error")
-            return redirect("/")
-        return f(*args, **kwargs)
-    return decorated_function
+# NOTA: El decorador admin_required ya está definido arriba (línea ~157)
+#       No hay duplicado. Se eliminó la versión que usaba email específico.
 
 @app.route('/admin')
 @admin_required
 def admin_panel():
-    """Panel de administración"""
+    """Panel de administración con gráficas y métricas clave"""
     conn = get_connection()
     try:
         with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-            # Estadísticas básicas
+            # ----- Estadísticas generales (ya existentes) -----
             cursor.execute("SELECT COUNT(*) as total FROM usuarios")
             total_usuarios = cursor.fetchone()['total']
-            
+
             cursor.execute("SELECT COUNT(*) as total FROM empleados")
             total_empleados = cursor.fetchone()['total']
-            
+
             cursor.execute("SELECT COUNT(*) as total FROM clientes")
             total_clientes = cursor.fetchone()['total']
-            
+
             cursor.execute("SELECT COUNT(*) as total FROM citas WHERE fecha = CURDATE()")
             citas_hoy = cursor.fetchone()['total']
-            
+
             cursor.execute("SELECT IFNULL(SUM(total), 0) as total FROM ventas WHERE DATE(fecha) = CURDATE()")
             ventas_hoy = cursor.fetchone()['total']
-            
-            # Últimas actividades - Simplificado para evitar problemas de UNION
+
+            # ----- NUEVAS CONSULTAS PARA GRÁFICAS -----
+
+            # 1. Ventas últimos 7 días
+            cursor.execute("""
+                SELECT DATE(fecha) as dia, IFNULL(SUM(total),0) as total
+                FROM ventas
+                WHERE fecha >= CURDATE() - INTERVAL 6 DAY
+                GROUP BY DATE(fecha)
+                ORDER BY dia
+            """)
+            ventas_dias = cursor.fetchall()
+
+            # 2. Distribución de métodos de pago
+            cursor.execute("""
+                SELECT metodo_pago, COUNT(*) as cantidad, IFNULL(SUM(total),0) as total
+                FROM ventas
+                GROUP BY metodo_pago
+                ORDER BY cantidad DESC
+            """)
+            metodos_pago = cursor.fetchall()
+
+            # 3. Top 5 servicios más vendidos
+            cursor.execute("""
+                SELECT s.nombre_servicio, COUNT(*) as cantidad, IFNULL(SUM(v.total),0) as total
+                FROM ventas v
+                JOIN servicios s ON v.id_servicio = s.id
+                GROUP BY s.nombre_servicio
+                ORDER BY cantidad DESC
+                LIMIT 5
+            """)
+            servicios_top = cursor.fetchall()
+
+            # 4. Citas por empleado (últimos 30 días)
+            cursor.execute("""
+                SELECT e.nombre, COUNT(*) as total_citas
+                FROM citas c
+                JOIN empleados e ON c.id_empleado = e.id
+                WHERE c.fecha >= CURDATE() - INTERVAL 30 DAY
+                GROUP BY e.id, e.nombre
+                ORDER BY total_citas DESC
+                LIMIT 5
+            """)
+            citas_empleados = cursor.fetchall()
+
+            # ----- Actividad reciente (ya existente) -----
             actividades = []
-            
-            # 1. Nuevos clientes (últimos 5)
             cursor.execute("""
                 SELECT 'Nuevo cliente' as tipo, nombre, fecha_registro as fecha 
                 FROM clientes 
                 ORDER BY fecha_registro DESC 
                 LIMIT 5
             """)
-            nuevos_clientes = cursor.fetchall()
-            actividades.extend(nuevos_clientes)
-            
-            # 2. Citas de hoy
+            actividades.extend(cursor.fetchall())
+
             cursor.execute("""
-                SELECT 'Nueva cita' as tipo, CONCAT('Cita para ', c.nombre) as nombre, 
+                SELECT 'Nueva cita' as tipo, 
+                       CONCAT('Cita para ', c.nombre) as nombre, 
                        CONCAT(ci.fecha, ' ', ci.hora) as fecha
                 FROM citas ci
                 JOIN clientes c ON ci.id_cliente = c.id
@@ -1039,28 +1322,15 @@ def admin_panel():
                 ORDER BY ci.hora DESC
                 LIMIT 5
             """)
-            citas_hoy_act = cursor.fetchall()
-            actividades.extend(citas_hoy_act)
-            
-            # Ordenar por fecha (más reciente primero) y limitar a 10
-            # Como fecha puede ser string, convertimos a datetime si es posible
-            def get_sort_key(item):
-                fecha_str = item.get('fecha', '')
-                try:
-                    # Intentar parsear como datetime
-                    if ' ' in fecha_str:
-                        return datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
-                    else:
-                        return datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
-                except (ValueError, TypeError):
-                    # Si falla, usar string vacío
-                    return datetime.min
-            
-            actividades.sort(key=get_sort_key, reverse=True)
+            actividades.extend(cursor.fetchall())
+
+            # Ordenar y limitar
+            actividades.sort(key=lambda x: x.get('fecha', ''), reverse=True)
             actividades = actividades[:10]
+
     finally:
         conn.close()
-    
+
     return render_template(
         'admin_panel.html',
         total_usuarios=total_usuarios,
@@ -1068,6 +1338,10 @@ def admin_panel():
         total_clientes=total_clientes,
         citas_hoy=citas_hoy,
         ventas_hoy=ventas_hoy,
+        ventas_dias=ventas_dias,
+        metodos_pago=metodos_pago,
+        servicios_top=servicios_top,
+        citas_empleados=citas_empleados,
         actividades=actividades
     )
 
@@ -1761,47 +2035,6 @@ def request_entity_too_large(e):
         mensaje="📁 El archivo es demasiado grande. Máximo 16MB",
         regresar=request.referrer or "/"
     ), 413
-
-# ============================================================================
-# FILTROS PERSONALIZADOS PARA TEMPLATES
-# ============================================================================
-
-@app.template_filter('format_currency')
-def format_currency(value):
-    """Formatear moneda"""
-    try:
-        return f"${float(value):,.2f}"
-    except (ValueError, TypeError):
-        return f"$0.00"
-
-@app.template_filter('format_date')
-def format_date(value, format='%d/%m/%Y'):
-    """Formatear fecha"""
-    if isinstance(value, str):
-        try:
-            value = datetime.strptime(value, '%Y-%m-%d')
-        except ValueError:
-            return value
-    elif isinstance(value, date):
-        value = datetime.combine(value, datetime.min.time())
-    
-    return value.strftime(format) if value else ''
-
-@app.template_filter('format_time')
-def format_time(value):
-    """Formatear hora"""
-    if isinstance(value, str):
-        try:
-            # Intentar diferentes formatos
-            for fmt in ('%H:%M:%S', '%H:%M'):
-                try:
-                    dt = datetime.strptime(value, fmt)
-                    return dt.strftime('%I:%M %p').lstrip('0')
-                except ValueError:
-                    continue
-        except Exception:
-            pass
-    return value
 
 # ============================================================================
 # RUTAS DE PRUEBA Y SALUD

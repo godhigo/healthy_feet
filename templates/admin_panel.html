@@ -2,17 +2,244 @@
 
 {% block title %}Panel de Administración - Healthy Feet{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Variables y reset */
+    .admin-dashboard {
+        padding: 0;
+    }
+    
+    /* Tarjetas de estadísticas */
+    .admin-stats {
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-card-admin {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem 1rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        text-align: center;
+        transition: all 0.3s;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border: 1px solid #f0f0f0;
+    }
+    
+    .stat-card-admin:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(67,97,238,0.12);
+        border-color: #4361ee20;
+    }
+    
+    .stat-icon-admin {
+        font-size: 2rem;
+        color: #4361ee;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-value-admin {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1e293b;
+        line-height: 1.2;
+    }
+    
+    .stat-label-admin {
+        color: #64748b;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .stat-trend {
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+    }
+    
+    .trend-up { color: #10b981; }
+    .trend-down { color: #ef4444; }
+    .trend-neutral { color: #64748b; }
+    
+    /* Gráficas - Estilo base */
+    .admin-charts-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin: 1.5rem 0;
+    }
+    
+    .chart-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+        transition: all 0.3s;
+        border: 1px solid #f1f5f9;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chart-card:hover {
+        box-shadow: 0 8px 24px rgba(67,97,238,0.08);
+    }
+    
+    .chart-title {
+        font-size: 1rem;
+        color: #0f172a;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .chart-canvas-container {
+        position: relative;
+        height: 220px;
+        width: 100%;
+        flex: 1;
+    }
+    
+    /* --- ESTILOS ESPECÍFICOS PARA LAS DOS PRIMERAS GRÁFICAS --- */
+    #ventas-card,
+    #metodos-card {
+        padding: 1rem;
+    }
+    
+    #ventas-card .chart-title,
+    #metodos-card .chart-title {
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+    }
+    
+    #ventas-card .chart-canvas-container,
+    #metodos-card .chart-canvas-container {
+        height: 160px !important;
+        flex: none; /* Evita que flex expanda el contenedor */
+    }
+    /* ------------------------------------------------------------ */
+    
+    /* Tablas compactas */
+    .table-sm {
+        font-size: 0.85rem;
+    }
+    
+    .table-sm td, .table-sm th {
+        padding: 0.6rem 0.75rem;
+    }
+    
+    .table-sm .badge {
+        font-size: 0.7rem;
+    }
+    
+    /* Tarjetas de métricas adicionales */
+    .metric-card {
+        background: white;
+        border-radius: 14px;
+        padding: 1.25rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        border: 1px solid #e2e8f0;
+        height: 100%;
+        transition: all 0.2s;
+    }
+    
+    .metric-card:hover {
+        border-color: #4361ee40;
+    }
+    
+    .metric-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-header h6 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #334155;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    /* Alerta de stock */
+    .stock-alert {
+        background: #fff7ed;
+        border-left: 4px solid #f97316;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .stock-alert span {
+        font-size: 0.85rem;
+    }
+    
+    .stock-alert .badge {
+        background: #f9731620;
+        color: #c2410c;
+    }
+    
+    /* Acciones rápidas */
+    .quick-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+    
+    .quick-action-btn {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 30px;
+        padding: 0.4rem 1rem;
+        font-size: 0.8rem;
+        color: #1e293b;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    
+    .quick-action-btn:hover {
+        background: #f8fafc;
+        border-color: #4361ee;
+        color: #4361ee;
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+        .admin-charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="content-header">
     <div class="d-flex justify-between align-center">
         <div>
             <h1 class="content-title">
-                <i class="fas fa-cog"></i>
-                Panel de Administración
+                <i class="fas fa-chart-pie"></i>
+                Panel de Control
             </h1>
-            <p class="content-subtitle">Herramientas y configuración del sistema</p>
+            <p class="content-subtitle">Visión ejecutiva del negocio</p>
         </div>
-        
         <div class="d-flex align-center gap-3">
             <div class="user-info">
                 <span class="text-primary">{{ current_user.nombre }}</span>
@@ -22,252 +249,541 @@
     </div>
 </div>
 
-<div class="admin-stats">
-    <div class="row">
+<div class="admin-dashboard">
+    <!-- ========== FILA 1: KPI PRINCIPALES ========== -->
+    <div class="row admin-stats" id="kpi-cards">
         <div class="col-md-3 col-sm-6">
             <div class="stat-card-admin">
                 <div class="stat-icon-admin">
-                    <i class="fas fa-users"></i>
+                    <i class="fas fa-dollar-sign"></i>
                 </div>
-                <div class="stat-value-admin">{{ total_usuarios }}</div>
-                <div class="stat-label-admin">Usuarios</div>
+                <div class="stat-value-admin" id="ventas-hoy-valor">$0</div>
+                <div class="stat-label-admin">Ventas Hoy</div>
+                <div class="stat-trend" id="ventas-trend"></div>
             </div>
         </div>
-        
         <div class="col-md-3 col-sm-6">
             <div class="stat-card-admin">
                 <div class="stat-icon-admin">
-                    <i class="fas fa-user-md"></i>
+                    <i class="fas fa-calendar-check"></i>
                 </div>
-                <div class="stat-value-admin">{{ total_empleados }}</div>
-                <div class="stat-label-admin">Empleados</div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 col-sm-6">
-            <div class="stat-card-admin">
-                <div class="stat-icon-admin">
-                    <i class="fas fa-user-friends"></i>
-                </div>
-                <div class="stat-value-admin">{{ total_clientes }}</div>
-                <div class="stat-label-admin">Clientes</div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 col-sm-6">
-            <div class="stat-card-admin">
-                <div class="stat-icon-admin">
-                    <i class="fas fa-calendar-day"></i>
-                </div>
-                <div class="stat-value-admin">{{ citas_hoy }}</div>
+                <div class="stat-value-admin" id="citas-hoy-valor">0</div>
                 <div class="stat-label-admin">Citas Hoy</div>
+                <div class="stat-trend" id="citas-trend"></div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card-admin">
+                <div class="stat-icon-admin">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="stat-value-admin" id="nuevos-clientes-valor">0</div>
+                <div class="stat-label-admin">Nuevos Clientes</div>
+                <div class="stat-trend" id="clientes-trend"></div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card-admin">
+                <div class="stat-icon-admin">
+                    <i class="fas fa-ticket-alt"></i>
+                </div>
+                <div class="stat-value-admin" id="ticket-promedio-valor">$0</div>
+                <div class="stat-label-admin">Ticket Promedio</div>
+                <div class="stat-trend" id="ticket-trend"></div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="container-card">
-    <h3 class="mb-4">
-        <i class="fas fa-tools text-primary"></i> 
-        Herramientas de Administración
-    </h3>
-    
-    <div class="admin-tools-grid">
-        <a href="{{ url_for('system_info') }}" class="admin-tool-card">
-            <div class="admin-tool-icon">
-                <i class="fas fa-server text-primary"></i>
+    <!-- ========== FILA 2: GRÁFICAS (6 TARJETAS) ========== -->
+    <div class="admin-charts-grid">
+        <!-- 1. Ventas últimos 7 días (MÁS PEQUEÑA) -->
+        <div class="chart-card" id="ventas-card">
+            <h5 class="chart-title">
+                <i class="fas fa-chart-line text-primary"></i>
+                Ventas Últimos 7 Días
+            </h5>
+            <div class="chart-canvas-container">
+                <canvas id="ventasSemanaChart"></canvas>
             </div>
-            <div class="admin-tool-content">
-                <h5>Información del Sistema</h5>
-                <p>Ver estadísticas y estado del servidor</p>
+        </div>
+        <!-- 2. Métodos de Pago (MÁS PEQUEÑA) -->
+        <div class="chart-card" id="metodos-card">
+            <h5 class="chart-title">
+                <i class="fas fa-chart-pie text-success"></i>
+                Métodos de Pago
+            </h5>
+            <div class="chart-canvas-container">
+                <canvas id="metodosPagoChart"></canvas>
             </div>
-        </a>
-        
-        <a href="{{ url_for('backup_database') }}" class="admin-tool-card" onclick="return confirm('¿Deseas crear un respaldo de la base de datos?')">
-            <div class="admin-tool-icon">
-                <i class="fas fa-database text-success"></i>
-            </div>
-            <div class="admin-tool-content">
-                <h5>Respaldo de Base de Datos</h5>
-                <p>Crear copia de seguridad del sistema</p>
-            </div>
-        </a>
-        
-        <div class="admin-tool-card" onclick="alert('Esta función estará disponible próximamente')">
-            <div class="admin-tool-icon">
+        </div>
+        <!-- 3. Servicios más vendidos -->
+        <div class="chart-card">
+            <h5 class="chart-title">
                 <i class="fas fa-chart-bar text-warning"></i>
-            </div>
-            <div class="admin-tool-content">
-                <h5>Reportes Avanzados</h5>
-                <p>Generar reportes detallados</p>
+                Servicios Más Vendidos
+            </h5>
+            <div class="chart-canvas-container">
+                <canvas id="serviciosChart"></canvas>
             </div>
         </div>
-        
-        <div class="admin-tool-card" onclick="alert('Esta función estará disponible próximamente')">
-            <div class="admin-tool-icon">
-                <i class="fas fa-user-shield text-danger"></i>
+        <!-- 4. Citas por Empleado -->
+        <div class="chart-card">
+            <h5 class="chart-title">
+                <i class="fas fa-user-md text-info"></i>
+                Citas por Empleado (30 días)
+            </h5>
+            <div class="chart-canvas-container">
+                <canvas id="empleadosChart"></canvas>
             </div>
-            <div class="admin-tool-content">
-                <h5>Gestión de Permisos</h5>
-                <p>Configurar roles y accesos</p>
+        </div>
+        <!-- 5. Productos más vendidos -->
+        <div class="chart-card">
+            <h5 class="chart-title">
+                <i class="fas fa-box text-primary"></i>
+                Productos Más Vendidos
+            </h5>
+            <div class="chart-canvas-container">
+                <canvas id="productosChart"></canvas>
             </div>
+        </div>
+        <!-- 6. Estado de Plantillas -->
+        <div class="chart-card">
+            <h5 class="chart-title">
+                <i class="fas fa-shoe-prints text-secondary"></i>
+                Estado de Plantillas
+            </h5>
+            <div class="chart-canvas-container">
+                <canvas id="plantillasChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== FILA 3: TOP CLIENTES + EMPLEADOS DESTACADOS ========== -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h6><i class="fas fa-crown text-warning"></i> Top 5 Clientes</h6>
+                    <span class="badge badge-primary">por gasto total</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm" id="top-clientes-table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Teléfono</th>
+                                <th>Compras</th>
+                                <th>Total</th>
+                                <th>Última</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Se llena con JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="quick-actions">
+                    <a href="{{ url_for('clientes') }}" class="quick-action-btn">
+                        <i class="fas fa-users"></i> Ver todos
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h6><i class="fas fa-trophy text-warning"></i> Empleados Destacados</h6>
+                    <span class="badge badge-success">últimos 30 días</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm" id="empleados-top-table">
+                        <thead>
+                            <tr>
+                                <th>Empleado</th>
+                                <th>Ventas</th>
+                                <th>Ingresos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Se llena con JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="quick-actions">
+                    <a href="{{ url_for('empleados') }}" class="quick-action-btn">
+                        <i class="fas fa-user-md"></i> Ver equipo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== FILA 4: RESUMEN FINANCIERO + STOCK BAJO ========== -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h6><i class="fas fa-chart-simple text-primary"></i> Resumen Financiero</h6>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="d-flex justify-between mb-2">
+                            <span class="text-muted">Hoy</span>
+                            <strong id="finanzas-hoy">$0</strong>
+                        </div>
+                        <div class="d-flex justify-between mb-2">
+                            <span class="text-muted">Esta semana</span>
+                            <strong id="finanzas-semana">$0</strong>
+                        </div>
+                        <div class="d-flex justify-between mb-2">
+                            <span class="text-muted">Este mes</span>
+                            <strong id="finanzas-mes">$0</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex justify-between mb-2">
+                            <span class="text-muted">Este año</span>
+                            <strong id="finanzas-ano">$0</strong>
+                        </div>
+                        <div class="d-flex justify-between mb-2">
+                            <span class="text-muted">Ticket promedio</span>
+                            <strong id="finanzas-ticket">$0</strong>
+                        </div>
+                        <div class="d-flex justify-between mb-2">
+                            <span class="text-muted">Cancelaciones (30d)</span>
+                            <strong id="cancelaciones-porc">0%</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <h6><i class="fas fa-exclamation-triangle text-danger"></i> Stock Bajo</h6>
+                    <span class="badge badge-danger">requiere atención</span>
+                </div>
+                <div id="stock-alerts-container">
+                    <!-- Se llena con JS -->
+                </div>
+                <div class="quick-actions">
+                    <a href="{{ url_for('productos') }}" class="quick-action-btn">
+                        <i class="fas fa-box"></i> Gestionar inventario
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== FILA 5: ACTIVIDAD RECIENTE ========== -->
+    <div class="container-card mt-4">
+        <div class="d-flex justify-between align-center mb-3">
+            <h3 class="mb-0">
+                <i class="fas fa-history text-primary"></i> 
+                Actividad Reciente
+            </h3>
+            <div class="quick-actions">
+                <span class="text-muted small">últimas 10 acciones</span>
+            </div>
+        </div>
+        <div class="table-container" id="actividades-container">
+            <!-- Se llena con JS -->
         </div>
     </div>
 </div>
+{% endblock %}
 
-<div class="container-card mt-4">
-    <h3 class="mb-4">
-        <i class="fas fa-history text-primary"></i> 
-        Actividad Reciente
-    </h3>
-    
-    {% if actividades %}
-    <div class="table-container">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Tipo</th>
-                    <th>Descripción</th>
-                    <th>Fecha</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for actividad in actividades %}
-                <tr>
-                    <td>
-                        <span class="badge 
-                            {% if actividad.tipo == 'Nuevo cliente' %}badge-success
-                            {% elif actividad.tipo == 'Nueva cita' %}badge-primary
-                            {% else %}badge-secondary{% endif %}">
-                            {{ actividad.tipo }}
-                        </span>
-                    </td>
-                    <td>{{ actividad.nombre }}</td>
-                    <td>
-                        <small class="text-muted">
-                            {% if actividad.fecha %}
-                                {{ actividad.fecha|format_date }} 
-                                {% if actividad.fecha|string != 'None' %}
-                                    {{ actividad.fecha|format_time }}
-                                {% endif %}
-                            {% endif %}
-                        </small>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div class="text-center p-4">
-        <i class="fas fa-history fa-2x text-muted mb-2"></i>
-        <h5 class="text-muted">No hay actividad reciente</h5>
-        <p class="text-muted small">Las actividades del sistema aparecerán aquí</p>
-    </div>
-    {% endif %}
-</div>
-
-<style>
-.admin-stats {
-    margin-bottom: 2rem;
-}
-
-.stat-card-admin {
-    background: white;
-    border-radius: 10px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    text-align: center;
-    transition: transform 0.3s;
-    height: 100%;
-}
-
-.stat-card-admin:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-}
-
-.stat-icon-admin {
-    font-size: 2.5rem;
-    color: #4361ee;
-    margin-bottom: 1rem;
-}
-
-.stat-value-admin {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 0.5rem;
-}
-
-.stat-label-admin {
-    color: #666;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.admin-tools-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1.5rem;
-}
-
-.admin-tool-card {
-    background: white;
-    border-radius: 10px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    border: 2px solid transparent;
-    transition: all 0.3s;
-    text-decoration: none;
-    color: inherit;
-    display: flex;
-    flex-direction: column;
-    cursor: pointer;
-}
-
-.admin-tool-card:hover {
-    border-color: #4361ee;
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(67, 97, 238, 0.2);
-}
-
-.admin-tool-icon {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-}
-
-.admin-tool-content h5 {
-    margin-bottom: 0.5rem;
-    color: #333;
-}
-
-.admin-tool-content p {
-    color: #666;
-    font-size: 0.9rem;
-    margin: 0;
-}
-
-@media (max-width: 768px) {
-    .admin-tools-grid {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
-
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Actualizar estadísticas cada 5 minutos
-    setInterval(() => {
-        fetch('/admin/refresh_stats')
-            .then(response => response.json())
-            .then(data => {
-                // Aquí podrías actualizar las estadísticas si implementas un endpoint
-                console.log('Estadísticas actualizadas');
-            })
-            .catch(error => console.error('Error:', error));
-    }, 300000); // 5 minutos
+    // Cargar todos los datos desde la API
+    fetch('{{ url_for("api_admin_dashboard") }}')
+        .then(response => response.json())
+        .then(data => {
+            // ========== 1. KPI CARDS ==========
+            document.getElementById('ventas-hoy-valor').innerText = '$' + parseFloat(data.ventas_hoy || 0).toFixed(2);
+            document.getElementById('citas-hoy-valor').innerText = data.citas_hoy_valor || 0;
+            document.getElementById('nuevos-clientes-valor').innerText = data.nuevos_hoy || 0;
+            document.getElementById('ticket-promedio-valor').innerText = '$' + parseFloat(data.finanzas.ticket_promedio || 0).toFixed(2);
+            
+            // Tendencias
+            const ventasTrend = document.getElementById('ventas-trend');
+            const diffVentas = (data.ventas_hoy || 0) - (data.ventas_ayer || 0);
+            ventasTrend.innerHTML = `<span class="${diffVentas >= 0 ? 'trend-up' : 'trend-down'}">
+                <i class="fas ${diffVentas >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
+                ${diffVentas >= 0 ? '+' : ''}$${Math.abs(diffVentas).toFixed(2)} vs ayer
+            </span>`;
+            
+            const citasTrend = document.getElementById('citas-trend');
+            const diffCitas = (data.citas_hoy_valor || 0) - (data.citas_ayer || 0);
+            citasTrend.innerHTML = `<span class="${diffCitas >= 0 ? 'trend-up' : 'trend-down'}">
+                <i class="fas ${diffCitas >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
+                ${diffCitas >= 0 ? '+' : ''}${diffCitas} vs ayer
+            </span>`;
+            
+            const clientesTrend = document.getElementById('clientes-trend');
+            const diffClientes = (data.nuevos_hoy || 0) - (data.nuevos_ayer || 0);
+            clientesTrend.innerHTML = `<span class="${diffClientes >= 0 ? 'trend-up' : 'trend-down'}">
+                <i class="fas ${diffClientes >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
+                ${diffClientes >= 0 ? '+' : ''}${diffClientes} vs ayer
+            </span>`;
+            
+            // ========== 2. GRÁFICAS ==========
+            // 2.1 Ventas últimos 7 días
+            const ventasDias = data.ventas_dias || [];
+            const dias = ventasDias.map(v => {
+                if (!v.dia) return '';
+                const date = new Date(v.dia);
+                return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+            });
+            const montos = ventasDias.map(v => parseFloat(v.total || 0));
+            
+            new Chart(document.getElementById('ventasSemanaChart'), {
+                type: 'line',
+                data: {
+                    labels: dias,
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: montos,
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#3a0ca3',
+                        pointBorderColor: 'white'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toFixed(2)}` } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: (val) => '$' + val } }
+                    }
+                }
+            });
+            
+            // 2.2 Métodos de pago
+            const metodos = data.metodos_pago || [];
+            const nombresMetodos = metodos.map(m => {
+                const map = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia' };
+                return map[m.metodo_pago] || m.metodo_pago;
+            });
+            const cantidadesMetodos = metodos.map(m => parseInt(m.cantidad || 0));
+            
+            new Chart(document.getElementById('metodosPagoChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: nombresMetodos,
+                    datasets: [{
+                        data: cantidadesMetodos,
+                        backgroundColor: ['#28a745', '#4361ee', '#ffc107'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+            
+            // 2.3 Servicios más vendidos
+            const servicios = data.servicios_top || [];
+            const nombresServicios = servicios.map(s => s.nombre_servicio || 'Sin nombre');
+            const cantidadesServicios = servicios.map(s => parseInt(s.cantidad || 0));
+            
+            new Chart(document.getElementById('serviciosChart'), {
+                type: 'bar',
+                data: {
+                    labels: nombresServicios,
+                    datasets: [{
+                        label: 'Cantidad vendida',
+                        data: cantidadesServicios,
+                        backgroundColor: '#4cc9f0',
+                        borderColor: '#3a0ca3',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+            
+            // 2.4 Citas por empleado
+            const empleados = data.citas_empleados || [];
+            const nombresEmpleados = empleados.map(e => e.nombre ? e.nombre.split(' ')[0] : 'Empleado');
+            const citasEmpleados = empleados.map(e => parseInt(e.total_citas || 0));
+            
+            new Chart(document.getElementById('empleadosChart'), {
+                type: 'bar',
+                data: {
+                    labels: nombresEmpleados,
+                    datasets: [{
+                        label: 'Citas (30 días)',
+                        data: citasEmpleados,
+                        backgroundColor: '#f72585',
+                        borderColor: '#b5179e',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+            
+            // 2.5 Productos más vendidos
+            const productos = data.top_productos || [];
+            if (productos.length > 0) {
+                const nombresProductos = productos.map(p => p.nombre || 'Producto');
+                const cantidadesProductos = productos.map(p => parseInt(p.cantidad || 0));
+                
+                new Chart(document.getElementById('productosChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: nombresProductos,
+                        datasets: [{
+                            label: 'Unidades vendidas',
+                            data: cantidadesProductos,
+                            backgroundColor: '#4361ee',
+                            borderColor: '#3a0ca3',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                        plugins: {
+                            tooltip: { callbacks: { label: (ctx) => `${ctx.raw} unidades` } }
+                        }
+                    }
+                });
+            } else {
+                document.getElementById('productosChart').parentNode.innerHTML = 
+                    '<div class="text-center p-4"><i class="fas fa-box-open fa-2x text-muted"></i><p class="mt-2">Sin datos de venta de productos</p></div>';
+            }
+            
+            // 2.6 Estado de plantillas
+            const plantillas = data.plantillas_estado || [];
+            if (plantillas.length > 0) {
+                const estados = plantillas.map(p => {
+                    const map = { 
+                        en_diseno: 'En diseño', 
+                        en_produccion: 'En producción', 
+                        listo: 'Listo', 
+                        entregado: 'Entregado',
+                        garantia: 'Garantía',
+                        vencido: 'Vencido'
+                    };
+                    return map[p.estado] || p.estado;
+                });
+                const cantidadesPlantillas = plantillas.map(p => parseInt(p.cantidad || 0));
+                
+                new Chart(document.getElementById('plantillasChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: estados,
+                        datasets: [{
+                            data: cantidadesPlantillas,
+                            backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444', '#6b7280'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            } else {
+                document.getElementById('plantillasChart').parentNode.innerHTML = 
+                    '<div class="text-center p-4"><i class="fas fa-shoe-prints fa-2x text-muted"></i><p class="mt-2">No hay plantillas registradas</p></div>';
+            }
+            
+            // ========== 3. TOP CLIENTES ==========
+            const topClientes = data.top_clientes || [];
+            let htmlClientes = '';
+            topClientes.forEach(c => {
+                htmlClientes += `<tr>
+                    <td><strong>${c.nombre || 'N/A'}</strong></td>
+                    <td>${c.telefono || ''}</td>
+                    <td>${c.total_compras || 0}</td>
+                    <td>$${parseFloat(c.total_gastado || 0).toFixed(2)}</td>
+                    <td><small>${c.ultima_compra ? new Date(c.ultima_compra).toLocaleDateString('es-MX') : '-'}</small></td>
+                </tr>`;
+            });
+            document.querySelector('#top-clientes-table tbody').innerHTML = htmlClientes || '<tr><td colspan="5" class="text-center">Sin datos</td></tr>';
+            
+            // ========== 4. EMPLEADOS DESTACADOS ==========
+            const empleadosTop = data.empleados_top || [];
+            let htmlEmpleados = '';
+            empleadosTop.forEach(e => {
+                htmlEmpleados += `<tr>
+                    <td>${e.nombre || 'N/A'}</td>
+                    <td>${e.ventas_realizadas || 0}</td>
+                    <td>$${parseFloat(e.ingresos_generados || 0).toFixed(2)}</td>
+                </tr>`;
+            });
+            document.querySelector('#empleados-top-table tbody').innerHTML = htmlEmpleados || '<tr><td colspan="3" class="text-center">Sin actividad</td></tr>';
+            
+            // ========== 5. FINANZAS ==========
+            document.getElementById('finanzas-hoy').innerText = '$' + parseFloat(data.finanzas.total_hoy || 0).toFixed(2);
+            document.getElementById('finanzas-semana').innerText = '$' + parseFloat(data.finanzas.total_semana || 0).toFixed(2);
+            document.getElementById('finanzas-mes').innerText = '$' + parseFloat(data.finanzas.total_mes || 0).toFixed(2);
+            document.getElementById('finanzas-ano').innerText = '$' + parseFloat(data.finanzas.total_ano || 0).toFixed(2);
+            document.getElementById('finanzas-ticket').innerText = '$' + parseFloat(data.finanzas.ticket_promedio || 0).toFixed(2);
+            document.getElementById('cancelaciones-porc').innerText = (data.citas_stats?.porcentaje_cancelacion || 0) + '%';
+            
+            // ========== 6. STOCK BAJO ==========
+            const stockBajo = data.productos_bajo_stock || [];
+            let htmlStock = '';
+            if (stockBajo.length === 0) {
+                htmlStock = '<div class="text-center p-3"><i class="fas fa-check-circle text-success"></i> Todo en orden, sin stock crítico</div>';
+            } else {
+                stockBajo.forEach(p => {
+                    htmlStock += `<div class="stock-alert">
+                        <span><strong>${p.nombre}</strong> <span class="text-muted">(stock: ${p.stock}/${p.stock_minimo})</span></span>
+                        <span class="badge badge-danger">-${p.deficit_porcentaje || 0}%</span>
+                    </div>`;
+                });
+            }
+            document.getElementById('stock-alerts-container').innerHTML = htmlStock;
+            
+            // ========== 7. ACTIVIDAD RECIENTE ==========
+            const actividades = data.actividades || [];
+            let htmlActividades = '';
+            if (actividades.length === 0) {
+                htmlActividades = '<div class="text-center p-4"><i class="fas fa-history fa-2x text-muted"></i><p class="mt-2">No hay actividad reciente</p></div>';
+            } else {
+                htmlActividades = '<table class="table"><thead><tr><th>Tipo</th><th>Descripción</th><th>Fecha</th></tr></thead><tbody>';
+                actividades.forEach(a => {
+                    let badgeClass = 'badge-secondary';
+                    if (a.tipo === 'Nuevo cliente') badgeClass = 'badge-success';
+                    if (a.tipo === 'Nueva cita') badgeClass = 'badge-primary';
+                    
+                    htmlActividades += `<tr>
+                        <td><span class="badge ${badgeClass}">${a.tipo}</span></td>
+                        <td>${a.nombre || ''}</td>
+                        <td><small class="text-muted">${a.fecha ? new Date(a.fecha).toLocaleString('es-MX') : ''}</small></td>
+                    </tr>`;
+                });
+                htmlActividades += '</tbody></table>';
+            }
+            document.getElementById('actividades-container').innerHTML = htmlActividades;
+        })
+        .catch(error => {
+            console.error('Error cargando datos del panel:', error);
+        });
 });
 </script>
 {% endblock %}
